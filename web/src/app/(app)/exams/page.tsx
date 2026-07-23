@@ -1,17 +1,7 @@
 import { cookies } from "next/headers";
 import { getExams } from "@/lib/exams/queries";
+import { daysUntil } from "@/lib/dates";
 import { createExam, deleteExam, setActiveExam } from "./actions";
-
-function daysUntil(dateStr: string | null): string {
-  if (!dateStr) return "未設定";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  const diffMs = target.getTime() - today.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return "試験日を過ぎています";
-  return `残り${diffDays}日`;
-}
 
 export default async function ExamsPage() {
   const exams = await getExams();
