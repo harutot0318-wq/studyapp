@@ -17,6 +17,12 @@ export default async function Home() {
           <p className="text-sm text-gray-600">
             ログイン中：{user.email}
           </p>
+          <Link
+            href="/exams"
+            className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+          >
+            資格管理へ
+          </Link>
           <form action={signOut}>
             <button
               type="submit"
