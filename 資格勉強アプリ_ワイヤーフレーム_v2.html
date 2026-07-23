@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>資格勉強アプリ ワイヤーフレーム</title>
+<style>
+  :root{
+    --line:#8a8a8a;
+    --line-light:#c7c7c7;
+    --bg:#f4f4f4;
+    --panel:#ffffff;
+    --gray1:#e2e2e2;
+    --gray2:#d3d3d3;
+    --gray3:#bdbdbd;
+    --text:#333;
+    --text-mute:#777;
+    --accent:#666;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  /* ---- Top toolbar (meta, not part of the wireframe itself) ---- */
+  .toolbar{
+    background:#222;
+    color:#fff;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:13px;
+    position:sticky;
+    top:0;
+    z-index:100;
+  }
+  .toolbar .title{font-weight:600;}
+  .toolbar .note{color:#bbb;font-size:12px;}
+  .toolbar select, .toolbar button{
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:4px;
+    border:1px solid #555;
+    background:#333;
+    color:#fff;
+    cursor:pointer;
+  }
+
+  /* ---- App shell ---- */
+  .app-shell{
+    display:flex;
+    max-width:1200px;
+    margin:24px auto;
+    border:1px solid var(--line);
+    background:var(--panel);
+    min-height:760px;
+    transition:max-width .2s ease;
+  }
+  .app-shell.mobile{
+    max-width:390px;
+    flex-direction:column;
+  }
+
+  /* ---- Sidebar nav (wireframe) ---- */
+  .sidenav{
+    width:200px;
+    flex-shrink:0;
+    border-right:1px dashed var(--line);
+    padding:16px 0;
+  }
+  .mobile .sidenav{
+    width:100%;
+    border-right:none;
+    border-bottom:1px dashed var(--line);
+    padding:8px 0;
+  }
+  .sidenav .logo{
+    border:1px dashed var(--line-light);
+    margin:0 14px 16px;
+    padding:10px 8px;
+    text-align:center;
+    font-size:13px;
+    color:var(--text-mute);
+  }
+  .mobile .sidenav .logo{display:none;}
+
+  .exam-switcher{
+    position:relative;
+    margin:0 14px 16px;
+  }
+  .mobile .exam-switcher{margin:0 8px 8px;}
+  .exam-switcher-current{
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--panel);
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  .exam-switcher-current .ph{display:block;margin-bottom:2px;}
+  .exam-switcher-name{
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .exam-switcher-menu{
+    display:none;
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    z-index:50;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+    margin-top:4px;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+  }
+  .exam-switcher-menu.open{display:block;}
+  .exam-switcher-item{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    padding:8px 10px;
+    font-size:12px;
+    border-bottom:1px dashed var(--line-light);
+    cursor:pointer;
+  }
+  .exam-switcher-item:last-child{border-bottom:none;}
+  .exam-switcher-item:hover{background:var(--gray1);}
+  .exam-switcher-item.add{color:var(--accent);font-weight:600;}
+
+  .navlist{list-style:none;margin:0;padding:0;}
+  .mobile .navlist{
+    display:flex;
+    overflow-x:auto;
+    gap:6px;
+    padding:0 8px;
+  }
+  .navitem{
+    display:block;
+    padding:10px 18px;
+    font-size:13px;
+    color:var(--text);
+    border-left:3px solid transparent;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .mobile .navitem{
+    border-left:none;
+    border:1px solid var(--line-light);
+    border-radius:14px;
+    padding:6px 12px;
+    margin-bottom:6px;
+  }
+  .navitem:hover{background:var(--gray1);}
+  .navitem.active{
+    background:var(--gray1);
+    border-left-color:var(--accent);
+    font-weight:600;
+  }
+  .mobile .navitem.active{background:var(--gray2);}
+  .navitem .sub{display:block;font-size:10px;color:var(--text-mute);}
+
+  /* ---- Main content ---- */
+  .main{
+    flex:1;
+    padding:22px 26px;
+    overflow-x:auto;
+  }
+  .mobile .main{padding:14px;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  .page-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:2px solid var(--line);
+    padding-bottom:8px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .page-head h1{
+    font-size:18px;
+    margin:0;
+  }
+  .page-head .crumb{font-size:11px;color:var(--text-mute);}
+
+  .btn{
+    display:inline-block;
+    border:1px solid var(--line);
+    background:var(--gray1);
+    padding:7px 14px;
+    font-size:12px;
+    border-radius:3px;
+    cursor:default;
+    color:var(--text);
+  }
+  .btn.primary{background:var(--gray3);font-weight:600;}
+
+  /* generic wireframe placeholder box */
+  .box{
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--panel);
+  }
+  .ph{ /* placeholder text/image marker */
+    color:var(--text-mute);
+    font-size:11px;
+  }
+  .dashed{border:1px dashed var(--line-light);}
+
+  /* dashboard stat cards */
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:12px;
+    margin-bottom:20px;
+  }
+  .mobile .stat-row{grid-template-columns:repeat(2,1fr);}
+  .stat-card{
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:12px 10px;
+    text-align:center;
+  }
+  .stat-card .label{font-size:11px;color:var(--text-mute);margin-bottom:10px;}
+  .stat-card .value{
+    font-size:20px;
+    font-weight:700;
+    border:1px dashed var(--line-light);
+    padding:8px 0;
+    color:var(--accent);
+  }
+
+  .two-col{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:16px;
+  }
+  .mobile .two-col{grid-template-columns:1fr;}
+
+  .panel-title{
+    font-size:13px;
+    font-weight:600;
+    border-bottom:1px solid var(--line-light);
+    padding:10px 12px;
+  }
+  .panel-body{padding:12px;}
+
+  .row-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 6px;
+    border-bottom:1px dashed var(--line-light);
+    font-size:12px;
+  }
+  .row-item:last-child{border-bottom:none;}
+  .checkbox{
+    width:14px;height:14px;border:1px solid var(--line);flex-shrink:0;
+  }
+  .checkbox.checked{background:var(--gray3);}
+  .tag{
+    display:inline-block;
+    font-size:10px;
+    border:1px solid var(--line-light);
+    border-radius:10px;
+    padding:1px 8px;
+    color:var(--text-mute);
+  }
+  .priority-high{border-color:#999;background:var(--gray2);}
+  .badge{
+    font-size:10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:1px 6px;
+  }
+
+  /* toolbar row: filters / add button */
+  .action-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .filter-bar{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .field{
+    border:1px solid var(--line-light);
+    border-radius:3px;
+    padding:6px 10px;
+    font-size:11px;
+    color:var(--text-mute);
+    background:#fafafa;
+    min-width:90px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+  }
+  th,td{
+    border:1px solid var(--line-light);
+    padding:8px 10px;
+    text-align:left;
+  }
+  th{background:var(--gray1);font-weight:600;}
+  tr:nth-child(even) td{background:#fafafa;}
+
+  .form-box{
+    border:1px dashed var(--line);
+    border-radius:4px;
+    padding:14px;
+    margin-bottom:18px;
+    background:#fbfbfb;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px 16px;
+  }
+  .mobile .form-grid{grid-template-columns:1fr;}
+  .form-line{display:flex;flex-direction:column;gap:4px;}
+  .form-line label{font-size:11px;color:var(--text-mute);}
+  .form-line .input{
+    border:1px solid var(--line-light);
+    border-radius:3px;
+    padding:7px 8px;
+    background:#fff;
+    font-size:12px;
+    color:var(--text-mute);
+    min-height:16px;
+  }
+  .form-line .input.tall{min-height:44px;}
+  .form-actions{
+    grid-column:1/-1;
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+    margin-top:4px;
+  }
+
+  .progress-bar{
+    width:100%;
+    height:8px;
+    background:var(--gray1);
+    border:1px solid var(--line-light);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .progress-bar span{
+    display:block;
+    height:100%;
+    background:var(--gray3);
+  }
+
+  .word-card{
+    border:1px solid var(--line-light);
+    border-radius:4px;
+    padding:10px 12px;
+    margin-bottom:10px;
+  }
+  .word-card .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .word-card .word{font-weight:700;font-size:13px;}
+  .word-card .meta{font-size:11px;color:var(--text-mute);margin-top:4px;}
+
+  .tabs{
+    display:flex;
+    gap:2px;
+    margin-bottom:14px;
+    border-bottom:1px solid var(--line-light);
+  }
+  .tab{
+    padding:8px 16px;
+    font-size:12px;
+    border:1px solid var(--line-light);
+    border-bottom:none;
+    border-radius:4px 4px 0 0;
+    background:#f0f0f0;
+    color:var(--text-mute);
+  }
+  .tab.active{background:#fff;color:var(--text);font-weight:600;}
+
+  .chart-box{
+    border:1px dashed var(--line);
+    border-radius:4px;
+    height:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text-mute);
+    font-size:11px;
+    background:
+      repeating-linear-gradient(45deg, #f7f7f7, #f7f7f7 8px, #eee 8px, #eee 16px);
+  }
+
+  .section-title{
+    font-size:13px;
+    font-weight:600;
+    margin:18px 0 8px;
+    color:var(--text);
+  }
+  .hint{font-size:11px;color:var(--text-mute);margin-bottom:10px;}
+
+  .stat-card .value.empty{
+    font-size:11px;
+    font-weight:400;
+    line-height:1.5;
+    color:var(--text-mute);
+    border-style:dashed;
+    padding:6px 4px;
+  }
+  .stat-card .value.empty .cta{
+    display:block;
+    font-size:10px;
+    color:var(--accent);
+    margin-top:2px;
+    text-decoration:underline;
+  }
+
+  .bar-chart{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    height:120px;
+    border:1px dashed var(--line);
+    border-radius:4px;
+    padding:10px;
+  }
+  .bar-chart .bar{
+    flex:1;
+    background:var(--gray2);
+    border:1px solid var(--line-light);
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    font-size:10px;
+    color:var(--text-mute);
+    position:relative;
+  }
+  .bar-chart .bar .bar-label{
+    position:absolute;
+    bottom:-18px;
+    white-space:nowrap;
+    font-size:10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <span class="title">資格勉強アプリ – ワイヤーフレーム</span>
+    <span class="note">（低精度・レイアウト確認用 / 要件定義書 Must＋Should機能ベース）</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button onclick="toggleDevice()">PC ⇔ スマホ 切替</button>
+  </div>
+</div>
+
+<div class="app-shell" id="shell">
+
+  <!-- ================= SIDE NAV ================= -->
+  <div class="sidenav">
+    <div class="logo">📘 LOGO / アプリ名</div>
+
+    <div class="exam-switcher" id="examSwitcher">
+      <div class="exam-switcher-current" onclick="toggleExamMenu()">
+        <span class="ph">対象資格（切替）</span>
+        <div class="exam-switcher-name">🎓 <span id="examSwitcherLabel">日商簿記1級</span> ▾</div>
+      </div>
+      <div class="exam-switcher-menu" id="examSwitcherMenu">
+        <div class="exam-switcher-item" onclick="selectExam('日商簿記1級')"><span>日商簿記1級</span><span class="ph">残り45日</span></div>
+        <div class="exam-switcher-item" onclick="selectExam('TOEIC')"><span>TOEIC</span><span class="ph">残り120日</span></div>
+        <div class="exam-switcher-item add" onclick="selectExam(null)">＋ 資格を追加 / 管理</div>
+      </div>
+    </div>
+
+    <ul class="navlist" id="navlist">
+      <li class="navitem" data-target="exam-mgmt">資格管理</li>
+      <li class="navitem active" data-target="dashboard">ダッシュボード</li>
+      <li class="navitem" data-target="study-log">学習記録</li>
+      <li class="navitem" data-target="tasks">タスク管理</li>
+      <li class="navitem" data-target="materials">教材管理</li>
+      <li class="navitem" data-target="words">単語帳</li>
+      <li class="navitem" data-target="word-search">単語検索</li>
+      <li class="navitem" data-target="review">復習管理</li>
+      <li class="navitem" data-target="goals">目標管理</li>
+      <li class="navitem" data-target="analysis">学習分析</li>
+    </ul>
+  </div>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+
+    <!-- 1. ダッシュボード -->
+    <div class="screen active" id="screen-dashboard">
+      <div class="page-head">
+        <h1>ダッシュボード</h1>
+        <span class="crumb">4.2 ダッシュボード（Must）</span>
+      </div>
+      <div class="hint">対象資格：<strong>日商簿記1級</strong>（サイドバー上部の切替から他の資格に切り替え可能）</div>
+
+      <div class="stat-row">
+        <div class="stat-card"><div class="label">今日の学習時間</div><div class="value">2.5h</div></div>
+        <div class="stat-card"><div class="label">今週の学習時間</div><div class="value">14h</div></div>
+        <div class="stat-card"><div class="label">連続学習日数</div><div class="value">🔥12日</div></div>
+        <div class="stat-card"><div class="label">今日の目標達成率</div><div class="value">80%</div></div>
+        <div class="stat-card"><div class="label">試験までの残り日数</div><div class="value">残り45日</div></div>
+        <!-- 目標・試験日が未登録の場合の表示例（1つ下に別掲） -->
+      </div>
+
+      <div class="hint" style="margin-bottom:14px;">
+        ▼ 目標・試験日が未登録の場合、該当カードは下記のような表示になる（プレースホルダー）
+      </div>
+      <div class="stat-row" style="margin-bottom:20px;">
+        <div class="stat-card"><div class="label">今日の目標達成率</div><div class="value empty">未設定<span class="cta">→ 目標を設定</span></div></div>
+        <div class="stat-card"><div class="label">試験までの残り日数</div><div class="value empty">未設定<span class="cta">→ 試験日を登録</span></div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="box">
+          <div class="panel-title">今日のタスク <span class="ph">（タスク管理と連動）</span></div>
+          <div class="panel-body">
+            <div class="row-item"><div class="checkbox checked"></div>過去問 第3章 演習 <span class="tag">高</span></div>
+            <div class="row-item"><div class="checkbox"></div>単語帳の復習 10件 <span class="tag">中</span></div>
+            <div class="row-item"><div class="checkbox"></div>参考書 p.80-100 <span class="tag">低</span></div>
+            <div class="row-item"><span class="btn">＋ タスクを追加</span></div>
+          </div>
+        </div>
+        <div class="box">
+          <div class="panel-title">最近の学習記録</div>
+          <div class="panel-body">
+            <div class="row-item">07/22　簿記論　2.0h</div>
+            <div class="row-item">07/21　財務諸表論　1.5h</div>
+            <div class="row-item">07/20　簿記論　3.0h</div>
+            <div class="row-item"><span class="btn">＋ 学習を記録する</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 学習記録 -->
+    <div class="screen" id="screen-study-log">
+      <div class="page-head">
+        <h1>学習記録</h1>
+        <span class="crumb">4.3 学習記録（Must）</span>
+      </div>
+      <div class="hint">対象資格：<strong>日商簿記1級</strong>（科目・教材の選択肢はこの資格に属するものに限定される）</div>
+
+      <div class="action-bar">
+        <div class="filter-bar">
+          <div class="field">日付で絞込 ▾</div>
+          <div class="field">科目で絞込 ▾</div>
+          <div class="field">教材で絞込 ▾</div>
+          <div class="field">キーワード検索</div>
+        </div>
+        <span class="btn primary">＋ 新規記録</span>
+      </div>
+
+      <div class="form-box">
+        <div class="hint">学習記録 入力フォーム（新規追加時に表示）</div>
+        <div class="form-grid">
+          <div class="form-line"><label>科目</label><div class="input">選択：簿記論 ▾</div></div>
+          <div class="form-line"><label>教材</label><div class="input">選択：総合問題集 ▾</div></div>
+          <div class="form-line"><label>開始時刻／終了時刻 or 時間数</label><div class="input">19:00 〜 21:00（2.0h）</div></div>
+          <div class="form-line"><label>メモ（自由記述）</label><div class="input tall">学習内容・気づきを入力…</div></div>
+          <div class="form-actions"><span class="btn">キャンセル</span><span class="btn primary">保存</span></div>
+        </div>
+      </div>
+
+      <table>
+        <tr><th>日付</th><th>科目</th><th>教材</th><th>時間</th><th>メモ</th><th></th></tr>
+        <tr><td>2026/07/22</td><td>簿記論</td><td>総合問題集</td><td>2.0h</td><td>第5問の連結が苦手…</td><td class="ph">編集/削除</td></tr>
+        <tr><td>2026/07/21</td><td>財務諸表論</td><td>テキスト</td><td>1.5h</td><td>第3章まで読了</td><td class="ph">編集/削除</td></tr>
+        <tr><td>2026/07/20</td><td>簿記論</td><td>過去問</td><td>3.0h</td><td>本試験レベル演習</td><td class="ph">編集/削除</td></tr>
+      </table>
+    </div>
+
+    <!-- 3. タスク管理 -->
+    <div class="screen" id="screen-tasks">
+      <div class="page-head">
+        <h1>タスク管理</h1>
+        <span class="crumb">4.4 タスク管理（Must）</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">未完了</div>
+        <div class="tab">完了済み</div>
+        <div class="tab">すべて</div>
+      </div>
+
+      <div class="form-box">
+        <div class="form-grid">
+          <div class="form-line" style="grid-column:1/2;"><label>タスク名（自由入力）</label><div class="input">例：過去問 第4章 演習</div></div>
+          <div class="form-line"><label>優先度</label><div class="input">高 ／ 中 ／ 低</div></div>
+          <div class="form-actions" style="grid-column:1/-1;justify-content:flex-start;"><span class="btn primary">＋ 追加</span></div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="panel-body">
+          <div class="row-item"><div class="checkbox"></div>過去問 第4章 演習 <span class="tag priority-high">優先度：高</span><span class="ph" style="margin-left:auto;">編集 / 削除</span></div>
+          <div class="row-item"><div class="checkbox"></div>単語帳の復習 10件 <span class="tag">優先度：中</span><span class="ph" style="margin-left:auto;">編集 / 削除</span></div>
+          <div class="row-item"><div class="checkbox checked"></div>参考書 p.80-100 <span class="tag">優先度：低</span><span class="ph" style="margin-left:auto;">編集 / 削除</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 教材管理 -->
+    <div class="screen" id="screen-materials">
+      <div class="page-head">
+        <h1>教材管理</h1>
+        <span class="crumb">4.5 教材管理（Must）</span>
+      </div>
+      <div class="hint">対象資格：<strong>日商簿記1級</strong>（登録する教材は、この資格配下の科目に紐づく）</div>
+
+      <div class="action-bar">
+        <div class="filter-bar">
+          <div class="field">種別で絞込 ▾</div>
+          <div class="field">科目で絞込 ▾</div>
+        </div>
+        <span class="btn primary">＋ 教材を追加</span>
+      </div>
+
+      <table>
+        <tr><th>教材名</th><th>種別</th><th>進捗</th><th>累計学習時間</th><th></th></tr>
+        <tr>
+          <td>総合問題集</td>
+          <td><span class="badge">問題集</span></td>
+          <td style="min-width:140px;">
+            <div class="progress-bar"><span style="width:65%;"></span></div>
+            <span class="ph">65%（第7章/全10章）</span>
+          </td>
+          <td>32.5h</td>
+          <td class="ph">編集/削除</td>
+        </tr>
+        <tr>
+          <td>基本テキスト</td>
+          <td><span class="badge">参考書</span></td>
+          <td style="min-width:140px;">
+            <div class="progress-bar"><span style="width:40%;"></span></div>
+            <span class="ph">40%（p.120/300）</span>
+          </td>
+          <td>18.0h</td>
+          <td class="ph">編集/削除</td>
+        </tr>
+        <tr>
+          <td>講義動画シリーズ</td>
+          <td><span class="badge">動画</span></td>
+          <td style="min-width:140px;">
+            <div class="progress-bar"><span style="width:20%;"></span></div>
+            <span class="ph">20%（4/20話）</span>
+          </td>
+          <td>6.0h</td>
+          <td class="ph">編集/削除</td>
+        </tr>
+      </table>
+
+      <div class="form-box" style="margin-top:16px;">
+        <div class="hint">教材 登録・編集フォーム</div>
+        <div class="form-grid">
+          <div class="form-line"><label>教材名</label><div class="input">例：総合問題集</div></div>
+          <div class="form-line"><label>教材種別</label><div class="input">参考書／問題集／動画／その他 ▾</div></div>
+          <div class="form-line"><label>進捗（ページ数・章など）</label><div class="input">例：第7章まで完了</div></div>
+          <div class="form-line"><label>科目</label><div class="input">選択 ▾</div></div>
+          <div class="form-actions"><span class="btn">キャンセル</span><span class="btn primary">保存</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 単語帳 -->
+    <div class="screen" id="screen-words">
+      <div class="page-head">
+        <h1>わからなかった単語帳</h1>
+        <span class="crumb">4.6 わからなかった単語帳（Must）</span>
+      </div>
+      <div class="hint">新規登録は対象資格「<strong>日商簿記1級</strong>」に対して行われる。一覧表示の範囲は下のタブで切替可能。</div>
+
+      <div class="tabs" id="wordScopeTabs">
+        <div class="tab active" onclick="setWordScope(this,'current')">対象資格のみ</div>
+        <div class="tab" onclick="setWordScope(this,'all')">すべての資格</div>
+      </div>
+
+      <div class="action-bar">
+        <span class="ph" id="wordCountLabel">全 24件（日商簿記1級）</span>
+        <span class="btn primary">＋ 単語を追加</span>
+      </div>
+
+      <div class="form-box">
+        <div class="hint">単語 登録フォーム</div>
+        <div class="form-grid">
+          <div class="form-line"><label>単語</label><div class="input">例：繰延税金資産</div></div>
+          <div class="form-line"><label>教材（関連付け）</label><div class="input">選択：総合問題集 ▾</div></div>
+          <div class="form-line" style="grid-column:1/-1;"><label>意味・解説・メモ</label><div class="input tall">意味や解説、覚え方メモなどを入力…</div></div>
+          <div class="form-line"><label>タグ（複数可）</label><div class="input">#税効果会計 #仕訳 ＋</div></div>
+          <div class="form-line"><label>理解度</label><div class="input">未理解 ／ うろ覚え ／ 理解済み</div></div>
+          <div class="form-actions"><span class="btn">キャンセル</span><span class="btn primary">保存</span></div>
+        </div>
+      </div>
+
+      <div class="section-title">登録済みの単語</div>
+      <div class="word-card">
+        <div class="top-row">
+          <span class="word">繰延税金資産</span>
+          <span><span class="badge">うろ覚え</span> <span class="badge">未解決</span></span>
+        </div>
+        <div class="ph">税効果会計により将来の税負担が軽減される場合に計上する資産…</div>
+        <div class="meta"><span class="tag">#税効果会計</span> <span class="tag">#仕訳</span>　教材：総合問題集　<span class="ph">資格：日商簿記1級</span></div>
+      </div>
+      <div class="word-card">
+        <div class="top-row">
+          <span class="word">のれん</span>
+          <span><span class="badge">理解済み</span> <span class="badge">解決済み</span></span>
+        </div>
+        <div class="ph">企業結合において取得原価が受入純資産を上回る差額…</div>
+        <div class="meta"><span class="tag">#連結会計</span>　教材：基本テキスト　<span class="ph">資格：日商簿記1級</span></div>
+      </div>
+      <div class="word-card">
+        <div class="top-row">
+          <span class="word">非支配株主持分</span>
+          <span><span class="badge">未理解</span> <span class="badge">未解決</span></span>
+        </div>
+        <div class="ph">子会社の資本のうち親会社に帰属しない部分…</div>
+        <div class="meta"><span class="tag">#連結会計</span> <span class="tag">#持分</span>　教材：講義動画シリーズ　<span class="ph">資格：日商簿記1級</span></div>
+      </div>
+      <div class="word-card word-all-only" style="display:none;">
+        <div class="top-row">
+          <span class="word">acquiesce</span>
+          <span><span class="badge">うろ覚え</span> <span class="badge">未解決</span></span>
+        </div>
+        <div class="ph">（不本意ながら）黙認する、しぶしぶ従う…</div>
+        <div class="meta"><span class="tag">#Reading</span> <span class="tag">#Part7</span>　教材：公式問題集　<span class="ph">資格：TOEIC</span></div>
+      </div>
+    </div>
+
+    <!-- 6. 単語検索 -->
+    <div class="screen" id="screen-word-search">
+      <div class="page-head">
+        <h1>単語検索</h1>
+        <span class="crumb">4.7 単語検索（Must）</span>
+      </div>
+
+      <div class="form-box">
+        <div class="form-grid">
+          <div class="form-line" style="grid-column:1/-1;"><label>キーワード検索（単語名）</label><div class="input">🔍 単語名を入力…</div></div>
+          <div class="form-line"><label>タグで絞込</label><div class="input">選択 ▾</div></div>
+          <div class="form-line"><label>教材で絞込</label><div class="input">選択 ▾</div></div>
+          <div class="form-line"><label>科目で絞込</label><div class="input">選択 ▾</div></div>
+          <div class="form-line"><label>表示条件</label><div class="input">☐ 未解決の単語のみ表示</div></div>
+        </div>
+      </div>
+
+      <div class="section-title">検索結果（3件）</div>
+      <div class="word-card">
+        <div class="top-row"><span class="word">繰延税金資産</span><span class="badge">うろ覚え</span></div>
+        <div class="meta"><span class="tag">#税効果会計</span>　教材：総合問題集　科目：簿記論</div>
+      </div>
+      <div class="word-card">
+        <div class="top-row"><span class="word">非支配株主持分</span><span class="badge">未理解</span></div>
+        <div class="meta"><span class="tag">#連結会計</span>　教材：講義動画シリーズ　科目：簿記論</div>
+      </div>
+      <div class="word-card">
+        <div class="top-row"><span class="word">のれん</span><span class="badge">理解済み</span></div>
+        <div class="meta"><span class="tag">#連結会計</span>　教材：基本テキスト　科目：簿記論</div>
+      </div>
+    </div>
+
+    <!-- 7. 復習管理 -->
+    <div class="screen" id="screen-review">
+      <div class="page-head">
+        <h1>復習管理</h1>
+        <span class="crumb">4.8 復習管理（Must）</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">未実施</div>
+        <div class="tab">実施済み</div>
+      </div>
+
+      <table>
+        <tr><th>対象</th><th>種別</th><th>復習予定日</th><th>状態</th><th>理解度</th><th></th></tr>
+        <tr><td>繰延税金資産</td><td>単語帳</td><td>2026/07/24</td><td><span class="badge">未実施</span></td><td>うろ覚え</td><td class="ph">復習を実施 →</td></tr>
+        <tr><td>総合問題集 第7章</td><td>教材</td><td>2026/07/25</td><td><span class="badge">未実施</span></td><td>-</td><td class="ph">復習を実施 →</td></tr>
+        <tr><td>非支配株主持分</td><td>単語帳</td><td>2026/07/23</td><td><span class="badge">未実施</span></td><td>未理解</td><td class="ph">復習を実施 →</td></tr>
+      </table>
+
+      <div class="form-box" style="margin-top:16px;">
+        <div class="hint">復習実施ダイアログ（「復習を実施」クリック時に表示）</div>
+        <div class="form-grid">
+          <div class="form-line"><label>対象</label><div class="input">繰延税金資産</div></div>
+          <div class="form-line"><label>理解度を更新</label><div class="input">未理解 ／ うろ覚え ／ 理解済み</div></div>
+          <div class="form-line"><label>次回復習予定日</label><div class="input">2026/07/31</div></div>
+          <div class="form-actions"><span class="btn">キャンセル</span><span class="btn primary">実施済みにする</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 目標管理 -->
+    <div class="screen" id="screen-goals">
+      <div class="page-head">
+        <h1>目標管理</h1>
+        <span class="crumb">4.9 目標管理（Should）</span>
+      </div>
+
+      <div class="action-bar">
+        <div class="filter-bar">
+          <div class="field">期間で絞込：日／週／月 ▾</div>
+        </div>
+        <span class="btn primary">＋ 目標を追加</span>
+      </div>
+
+      <div class="form-box">
+        <div class="hint">目標 登録フォーム（新規追加時に表示）</div>
+        <div class="form-grid">
+          <div class="form-line"><label>期間</label><div class="input">日 ／ 週 ／ 月 ▾</div></div>
+          <div class="form-line"><label>目標学習時間</label><div class="input">例：平日2.0h／週14h</div></div>
+          <div class="form-actions"><span class="btn">キャンセル</span><span class="btn primary">保存</span></div>
+        </div>
+      </div>
+
+      <div class="section-title">登録済みの目標</div>
+      <div class="box">
+        <div class="panel-body">
+          <div class="row-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span>日次目標　2.0h</span><span class="badge">達成率 80%</span>
+            </div>
+            <div class="progress-bar"><span style="width:80%;"></span></div>
+          </div>
+          <div class="row-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span>週次目標　14h</span><span class="badge">達成率 100%</span>
+            </div>
+            <div class="progress-bar"><span style="width:100%;"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. 資格管理・切替 -->
+    <div class="screen" id="screen-exam-mgmt">
+      <div class="page-head">
+        <h1>資格管理</h1>
+        <span class="crumb">4.1 資格管理・切替（Must）</span>
+      </div>
+      <div class="hint">ここで登録した資格が、サイドバー上部の「対象資格」切替に表示される。科目・教材・単語帳・学習記録・タスクは、切替中の資格に属するものだけが対象になる。</div>
+
+      <div class="action-bar">
+        <div class="filter-bar"></div>
+        <span class="btn primary">＋ 資格を追加</span>
+      </div>
+
+      <div class="form-box">
+        <div class="hint">資格 登録フォーム（新規追加時に表示）</div>
+        <div class="form-grid">
+          <div class="form-line"><label>資格名</label><div class="input">例：日商簿記1級</div></div>
+          <div class="form-line"><label>試験日</label><div class="input">2026/09/06</div></div>
+          <div class="form-actions"><span class="btn">キャンセル</span><span class="btn primary">保存</span></div>
+        </div>
+      </div>
+
+      <div class="section-title">登録済みの資格（複数並行管理・切替可能）</div>
+      <table>
+        <tr><th>資格名</th><th>試験日</th><th>残り日数</th><th>状態</th><th></th></tr>
+        <tr><td>日商簿記1級</td><td>2026/09/06</td><td>残り45日</td><td><span class="badge">対象資格（切替中）</span></td><td class="ph">編集/削除</td></tr>
+        <tr><td>TOEIC</td><td>2026/11/20</td><td>残り120日</td><td class="ph">この資格に切替 →</td><td class="ph">編集/削除</td></tr>
+      </table>
+    </div>
+
+    <!-- 10. 学習分析 -->
+    <div class="screen" id="screen-analysis">
+      <div class="page-head">
+        <h1>学習分析</h1>
+        <span class="crumb">4.10 学習分析（Should）</span>
+      </div>
+
+      <div class="action-bar">
+        <div class="filter-bar">
+          <div class="field">期間：週次／月次 ▾</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="box">
+          <div class="panel-title">科目別 学習時間</div>
+          <div class="panel-body">
+            <div class="bar-chart">
+              <div class="bar" style="height:90%;">32.5h<span class="bar-label">簿記論</span></div>
+              <div class="bar" style="height:55%;">18.0h<span class="bar-label">財務諸表論</span></div>
+              <div class="bar" style="height:20%;">6.0h<span class="bar-label">その他</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="box">
+          <div class="panel-title">教材別 学習時間</div>
+          <div class="panel-body">
+            <div class="bar-chart">
+              <div class="bar" style="height:90%;">32.5h<span class="bar-label">総合問題集</span></div>
+              <div class="bar" style="height:50%;">18.0h<span class="bar-label">基本テキスト</span></div>
+              <div class="bar" style="height:16%;">6.0h<span class="bar-label">講義動画</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">学習時間の推移（日次／週次）</div>
+      <div class="chart-box">折れ線グラフ プレースホルダー（Recharts想定）</div>
+
+      <div class="section-title">継続学習日数の推移</div>
+      <div class="chart-box">推移グラフ プレースホルダー（Recharts想定）</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const navitems = document.querySelectorAll('.navitem');
+  navitems.forEach(item=>{
+    item.addEventListener('click', ()=>{
+      navitems.forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById('screen-'+item.dataset.target).classList.add('active');
+    });
+  });
+
+  function toggleDevice(){
+    document.getElementById('shell').classList.toggle('mobile');
+  }
+
+  function toggleExamMenu(){
+    document.getElementById('examSwitcherMenu').classList.toggle('open');
+  }
+  function selectExam(name){
+    if(name){
+      document.getElementById('examSwitcherLabel').textContent = name;
+    } else {
+      navitems.forEach(i=>i.classList.remove('active'));
+      const target = document.querySelector('.navitem[data-target="exam-mgmt"]');
+      target.classList.add('active');
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById('screen-exam-mgmt').classList.add('active');
+    }
+    document.getElementById('examSwitcherMenu').classList.remove('open');
+  }
+  document.addEventListener('click', (e)=>{
+    const sw = document.getElementById('examSwitcher');
+    if(!sw.contains(e.target)){
+      document.getElementById('examSwitcherMenu').classList.remove('open');
+    }
+  });
+
+  function setWordScope(el, scope){
+    document.querySelectorAll('#wordScopeTabs .tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.word-all-only').forEach(c=>{
+      c.style.display = (scope==='all') ? '' : 'none';
+    });
+    document.getElementById('wordCountLabel').textContent =
+      (scope==='all') ? '全 31件（すべての資格）' : '全 24件（日商簿記1級）';
+  }
+</script>
+
+</body>
+</html>

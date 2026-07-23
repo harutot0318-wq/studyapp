@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>資格勉強向け学習管理アプリ データ設計書</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.8;
+    color: #222;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 24px;
+    border-bottom: 3px solid #2c5aa0;
+    padding-bottom: 12px;
+    color: #1a3a63;
+  }
+  h2 {
+    font-size: 19px;
+    margin-top: 40px;
+    padding: 8px 12px;
+    background: #eaf1fb;
+    border-left: 5px solid #2c5aa0;
+    color: #1a3a63;
+  }
+  h3 {
+    font-size: 16px;
+    margin-top: 28px;
+    color: #2c5aa0;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 24px;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 7px 9px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #2c5aa0;
+    color: #fff;
+    font-weight: 600;
+  }
+  tr:nth-child(even) { background: #f6f9fd; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .meta {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e0e0e0;
+    color: #444;
+    margin-left: 6px;
+  }
+  .decided { background: #dbeee0; color: #1e6b34; }
+  .open { background: #fdf3d6; color: #8a6d00; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+  .diagram-box {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    padding: 16px;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+  }
+  .pk { color: #a12b2b; font-weight: 600; }
+  .fk { color: #1a5a9a; }
+</style>
+</head>
+<body>
+
+<h1>資格勉強向け学習管理アプリ データ設計書</h1>
+<div class="meta">作成日：2026年7月23日　／　対象：要件定義書 v2・技術選定書 v2 に基づくデータ設計</div>
+
+<h2>1. 本書の位置づけ</h2>
+<p>
+本書は「要件定義書」で定義した機能要件（特に4.1 資格管理・切替で決定した「資格 → 科目 → 教材 → 単語」の階層構造、複数資格の並行管理）と、
+「技術選定書」で採用した Supabase（PostgreSQL）を前提に、実装に着手できる粒度までテーブル構造を具体化したものである。
+実装フェーズの最初のステップとして、コードを書く前にこの設計を確定させる。
+</p>
+
+<h2>2. ER図（全体像）</h2>
+<p class="meta">凡例：<code>||--o{</code> は「1対多（子が0件以上）」、<code>}o--o{</code> は「多対多」を表す。</p>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    EXAMS ||--o{ SUBJECTS : "has"
+    EXAMS ||--o{ TASKS : "has"
+    EXAMS ||--o{ GOALS : "has"
+    SUBJECTS ||--o{ MATERIALS : "has"
+    SUBJECTS ||--o{ STUDY_LOGS : "has"
+    MATERIALS ||--o{ STUDY_LOGS : "used in"
+    MATERIALS ||--o{ WORDS : "has"
+    MATERIALS ||--o{ REVIEWS : "target of"
+    WORDS ||--o{ REVIEWS : "target of"
+    WORDS }o--o{ TAGS : "tagged with"
+
+    EXAMS {
+        uuid id PK
+        uuid user_id FK
+        text name
+        date exam_date
+    }
+    SUBJECTS {
+        uuid id PK
+        uuid user_id FK
+        uuid exam_id FK
+        text name
+    }
+    MATERIALS {
+        uuid id PK
+        uuid user_id FK
+        uuid subject_id FK
+        text name
+        text material_type
+        numeric progress_percent
+    }
+    STUDY_LOGS {
+        uuid id PK
+        uuid user_id FK
+        uuid subject_id FK
+        uuid material_id FK
+        date study_date
+        int duration_minutes
+        text memo
+    }
+    WORDS {
+        uuid id PK
+        uuid user_id FK
+        uuid material_id FK
+        text term
+        text meaning
+        text understanding_level
+        bool is_resolved
+    }
+    TAGS {
+        uuid id PK
+        uuid user_id FK
+        text name
+    }
+    REVIEWS {
+        uuid id PK
+        uuid user_id FK
+        uuid word_id FK
+        uuid material_id FK
+        date scheduled_date
+        text status
+    }
+    TASKS {
+        uuid id PK
+        uuid user_id FK
+        uuid exam_id FK
+        text title
+        text priority
+        bool is_done
+    }
+    GOALS {
+        uuid id PK
+        uuid user_id FK
+        uuid exam_id FK
+        text period
+        int target_minutes
+    }
+</pre>
+</div>
+<p>
+補足：<code>WORDS</code> と <code>TAGS</code> の多対多は、PostgreSQL上では中間テーブル <code>word_tags</code>（<code>word_id</code>・<code>tag_id</code> の複合主キー）として実装する（3.7参照）。<br>
+<code>REVIEWS</code> は「単語帳」または「教材」のどちらか一方を復習対象とする想定のため、<code>word_id</code> ・ <code>material_id</code> はどちらか片方のみ値を持つ（3.8参照）。
+</p>
+
+<h2>3. テーブル定義</h2>
+
+<h3>3.1 exams（資格）</h3>
+<p class="meta">4.1 資格管理・切替に対応。全テーブルの起点となる最上位エンティティ。</p>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK, default gen_random_uuid()</td><td>資格ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td>name</td><td>text</td><td>not null</td><td>資格名（自由入力。例：日商簿記1級）</td></tr>
+<tr><td>exam_date</td><td>date</td><td>null許容</td><td>試験日。未登録の場合はダッシュボードの残り日数は「未設定」表示</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td>作成・更新日時</td></tr>
+</table>
+
+<h3>3.2 subjects（科目）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>科目ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">exam_id</td><td>uuid</td><td>FK → exams, not null, on delete cascade</td><td>属する資格</td></tr>
+<tr><td>name</td><td>text</td><td>not null</td><td>科目名（自由入力。例：簿記論）</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+
+<h3>3.3 materials（教材）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>教材ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">subject_id</td><td>uuid</td><td>FK → subjects, not null, on delete cascade</td><td>属する科目</td></tr>
+<tr><td>name</td><td>text</td><td>not null</td><td>教材名</td></tr>
+<tr><td>material_type</td><td>text</td><td>check in ('参考書','問題集','動画','その他')</td><td>教材種別</td></tr>
+<tr><td>progress_note</td><td>text</td><td>null許容</td><td>進捗の自由記述（例：第7章まで完了）</td></tr>
+<tr><td>progress_percent</td><td>numeric(5,2)</td><td>null許容, 0〜100</td><td>進捗率（進捗バー表示用）</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+
+<h3>3.4 study_logs（学習記録）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>学習記録ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">subject_id</td><td>uuid</td><td>FK → subjects, not null</td><td>対象科目</td></tr>
+<tr><td class="fk">material_id</td><td>uuid</td><td>FK → materials, null許容</td><td>使用教材（未選択も許容）</td></tr>
+<tr><td>study_date</td><td>date</td><td>not null</td><td>学習日</td></tr>
+<tr><td>start_time / end_time</td><td>time</td><td>null許容</td><td>開始・終了時刻（任意）</td></tr>
+<tr><td>duration_minutes</td><td>integer</td><td>not null</td><td>学習時間（分）。開始・終了時刻がある場合はそこから算出、なければ直接入力</td></tr>
+<tr><td>memo</td><td>text</td><td>null許容</td><td>学習内容・メモ（自由記述）</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+
+<h3>3.5 tasks（タスク）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>タスクID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">exam_id</td><td>uuid</td><td>FK → exams, not null</td><td>属する資格（切替中の資格に対して作成される）</td></tr>
+<tr><td>title</td><td>text</td><td>not null</td><td>タスク内容（自由入力）</td></tr>
+<tr><td>priority</td><td>text</td><td>check in ('高','中','低'), default '中'</td><td>優先度</td></tr>
+<tr><td>is_done</td><td>boolean</td><td>not null, default false</td><td>完了フラグ</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+
+<h3>3.6 words（わからなかった単語）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>単語ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">material_id</td><td>uuid</td><td>FK → materials, not null</td><td>紐づく教材（教材を介して科目・資格が一意に定まる）</td></tr>
+<tr><td>term</td><td>text</td><td>not null</td><td>単語</td></tr>
+<tr><td>meaning</td><td>text</td><td>null許容</td><td>意味・解説・メモ</td></tr>
+<tr><td>understanding_level</td><td>text</td><td>check in ('未理解','うろ覚え','理解済み'), default '未理解'</td><td>理解度</td></tr>
+<tr><td>is_resolved</td><td>boolean</td><td>not null, default false</td><td>解決済みフラグ</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+
+<h3>3.7 tags（タグ）／ word_tags（単語×タグ 中間テーブル）</h3>
+<table>
+<tr><th>テーブル</th><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td rowspan="3">tags</td><td class="pk">id</td><td>uuid</td><td>PK</td><td>タグID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td>name</td><td>text</td><td>not null, unique(user_id, name)</td><td>タグ名（例：#連結会計）。ユーザー内で重複不可とし、入力時に既存タグを再利用できるようにする</td></tr>
+<tr><td rowspan="2">word_tags</td><td class="fk">word_id</td><td>uuid</td><td>FK → words, on delete cascade</td><td>複合PK（word_id, tag_id）</td></tr>
+<tr><td class="fk">tag_id</td><td>uuid</td><td>FK → tags, on delete cascade</td><td></td></tr>
+</table>
+
+<h3>3.8 reviews（復習）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>復習ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">word_id</td><td>uuid</td><td>FK → words, null許容</td><td>単語帳を対象とする場合に設定</td></tr>
+<tr><td class="fk">material_id</td><td>uuid</td><td>FK → materials, null許容</td><td>教材を対象とする場合に設定</td></tr>
+<tr><td>scheduled_date</td><td>date</td><td>not null</td><td>復習予定日</td></tr>
+<tr><td>status</td><td>text</td><td>check in ('未実施','実施済み'), default '未実施'</td><td>復習状況</td></tr>
+<tr><td>completed_at</td><td>timestamptz</td><td>null許容</td><td>実施日時</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+<p class="meta">
+CHECK制約：<code>(word_id IS NOT NULL AND material_id IS NULL) OR (word_id IS NULL AND material_id IS NOT NULL)</code>　→　単語・教材のどちらか一方のみを対象とする。<br>
+復習実施時の理解度更新（4.8）は、このテーブルには保持せず、対象の <code>words.understanding_level</code> を直接更新する運用とする（履歴を残す要否は6.今後の検討事項を参照）。
+</p>
+
+<h3>3.9 goals（目標）</h3>
+<table>
+<tr><th>カラム</th><th>型</th><th>制約</th><th>説明</th></tr>
+<tr><td class="pk">id</td><td>uuid</td><td>PK</td><td>目標ID</td></tr>
+<tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users, not null</td><td>所有ユーザー</td></tr>
+<tr><td class="fk">exam_id</td><td>uuid</td><td>FK → exams, not null</td><td>属する資格</td></tr>
+<tr><td>period</td><td>text</td><td>check in ('日','週','月')</td><td>目標期間</td></tr>
+<tr><td>target_minutes</td><td>integer</td><td>not null</td><td>目標学習時間（分）</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamptz</td><td>default now()</td><td></td></tr>
+</table>
+
+<p class="meta">
+ダッシュボード（4.2）・学習分析（4.10）の集計値（今日の学習時間、連続学習日数、科目別集計など）は専用テーブルを持たず、<code>study_logs</code> を都度SQLで集計して算出する。
+</p>
+
+<h2>4. RLS（Row Level Security）方針</h2>
+<ul>
+<li>上記すべてのテーブルで RLS を有効化する（<code>word_tags</code> は <code>words</code> 経由での間接チェックも可）</li>
+<li>基本ポリシーは全テーブル共通で <code>user_id = auth.uid()</code> を select / insert / update / delete すべてに適用する</li>
+<li>insert 時は <code>user_id</code> を常にログインユーザーのIDで設定する（クライアントから任意の <code>user_id</code> を渡せないようにする）</li>
+<li><code>word_tags</code> のように <code>user_id</code> を持たない中間テーブルは、親テーブル（<code>words</code> または <code>tags</code>）の <code>user_id</code> をサブクエリで参照するポリシーにする</li>
+</ul>
+
+<h2>5. インデックス方針</h2>
+<ul>
+<li>全FKカラム（<code>exam_id</code>・<code>subject_id</code>・<code>material_id</code>・<code>word_id</code>・<code>tag_id</code>）に単体インデックスを作成</li>
+<li><code>study_logs(user_id, study_date)</code>：ダッシュボードの「今日／今週の学習時間」「連続学習日数」集計、学習履歴の絞り込みで使用</li>
+<li><code>reviews(user_id, scheduled_date, status)</code>：復習管理の「未実施一覧」表示で使用</li>
+<li><code>words(user_id, is_resolved)</code>：単語検索の「未解決のみ表示」フィルタで使用</li>
+<li><code>tasks(exam_id, is_done)</code>：ダッシュボード・タスク管理の未完了タスク表示で使用</li>
+</ul>
+
+<h2>6. 今後の検討事項</h2>
+<ul>
+<li>単語帳の「全資格横断表示」（4.6）は、<code>words → materials → subjects → exams</code> のJOINで都度絞り込む設計とした。件数増加時にパフォーマンスが問題になる場合は、<code>words</code>・<code>materials</code> に <code>exam_id</code> を非正規化して持たせることを検討する</li>
+<li>復習実施時に理解度の変更履歴（いつ・どう変わったか）を残す必要があるかは未決定。必要になった場合は <code>review_logs</code> 等の履歴テーブルを別途追加する</li>
+<li>連続学習日数（ストリーク）の判定ロジック（何時間以上で「学習した日」とみなすか、タイムゾーンの扱いなど）は詳細設計で別途定義する</li>
+<li>タスク（3.5）を資格に紐づけず、資格をまたいだ横断タスクとして扱いたいケースが出てきた場合は、<code>exam_id</code> を null許容に変更する</li>
+<li>将来拡張（通知・AI解説・バッジ）に伴うテーブル追加（例：<code>notifications</code>、<code>badges</code>）は本設計のスコープ外とし、必要になった時点で追記する</li>
+</ul>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default' });
+</script>
+
+</body>
+</html>

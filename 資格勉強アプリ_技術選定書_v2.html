@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>資格勉強向け学習管理アプリ 技術選定書</title>
+<style>
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    max-width: 860px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.8;
+    color: #222;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 24px;
+    border-bottom: 3px solid #2c5aa0;
+    padding-bottom: 12px;
+    color: #1a3a63;
+  }
+  h2 {
+    font-size: 19px;
+    margin-top: 40px;
+    padding: 8px 12px;
+    background: #eaf1fb;
+    border-left: 5px solid #2c5aa0;
+    color: #1a3a63;
+  }
+  h3 {
+    font-size: 16px;
+    margin-top: 24px;
+    color: #2c5aa0;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 24px;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #2c5aa0;
+    color: #fff;
+    font-weight: 600;
+  }
+  tr:nth-child(even) { background: #f6f9fd; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .meta {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e0e0e0;
+    color: #444;
+    margin-left: 6px;
+  }
+  .adopt { background: #dbeee0; color: #1e6b34; }
+  .reject { background: #f8dede; color: #a12b2b; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>資格勉強向け学習管理アプリ 技術選定書</h1>
+<div class="meta">作成日：2026年7月23日　／　対象：要件定義書（2026年7月23日版）に基づく技術選定</div>
+
+<h2>1. 本書の位置づけ</h2>
+<p>
+本書は「資格勉強向け学習管理アプリ 要件定義書」に記載された機能要件・非機能要件を実現するにあたり、採用する技術スタックを選定し、その根拠を整理したものである。
+開発体制は<strong>個人開発（一人）</strong>を前提とし、インフラ方針は特定の希望がないため、要件（個人利用中心・拡張性重視・毎日使う簡便さ）に最も適した構成をこちらで提案する。
+</p>
+
+<h2>2. 選定方針・評価基準</h2>
+<p>要件定義書から、技術選定において特に重視すべき点を以下のとおり整理する。</p>
+<ul>
+<li><strong>個人開発での運用負荷の低さ</strong>：インフラ管理・保守を一人でまかなえること</li>
+<li><strong>学習・実装コストの低さ</strong>：機能実装のスピードを優先し、枯れた技術・情報量の多い技術を選ぶこと</li>
+<li><strong>拡張性</strong>：AI解説・通知・グラフ分析・バッジ機能など将来拡張を後付けしやすいこと</li>
+<li><strong>レスポンシブ対応</strong>：PC・スマートフォン双方のブラウザで閲覧・操作できること</li>
+<li><strong>データの継続性・可用性</strong>：学習履歴や単語帳データが消失しないこと</li>
+<li><strong>費用</strong>：個人開発のため、無料枠または低コストで運用開始できること</li>
+</ul>
+<p>各評価項目は ◎（優れる）／〇（妥当）／△（やや弱い） の3段階で比較する。</p>
+
+<h2>3. 技術比較</h2>
+
+<h3>3.1 フロントエンドフレームワーク</h3>
+<table>
+<tr><th>候補</th><th>学習コスト</th><th>情報量・実績</th><th>UI実装効率</th><th>拡張性</th><th>備考</th></tr>
+<tr><td>Next.js（React + TypeScript）</td><td>〇</td><td>◎</td><td>◎</td><td>◎</td><td>フロント・API・SSRを一体で扱え、Vercelとの親和性が高い</td></tr>
+<tr><td>Nuxt（Vue + TypeScript）</td><td>◎</td><td>〇</td><td>〇</td><td>〇</td><td>学習コストは低いが、周辺ライブラリ（グラフ・UIキット等）はReact系がやや優勢</td></tr>
+<tr><td>SvelteKit</td><td>◎</td><td>△</td><td>〇</td><td>△</td><td>軽量で書きやすいが、情報量・実績が少なくBaaS連携例も少ない</td></tr>
+</table>
+<p><strong>採用：Next.js（React + TypeScript）</strong><span class="badge adopt">採用</span><br>
+理由：ダッシュボード・学習分析・単語検索など画面数が多く状態管理が複雑になるため、型安全なTypeScriptと情報量の多いReactエコシステムが個人開発でのトラブル解決速度に直結する。後述のBaaS（Supabase）・ホスティング（Vercel）との連携実績も豊富。</p>
+
+<h3>3.2 バックエンド／インフラ方針</h3>
+<table>
+<tr><th>候補</th><th>実装コスト</th><th>運用負荷</th><th>拡張性</th><th>費用</th><th>備考</th></tr>
+<tr><td>BaaS（Supabase）</td><td>◎</td><td>◎</td><td>〇</td><td>◎</td><td>認証・DB・ストレージ・Edge Functionsを一体提供。個人開発向け無料枠あり</td></tr>
+<tr><td>BaaS（Firebase）</td><td>◎</td><td>◎</td><td>〇</td><td>〇</td><td>NoSQL（Firestore）中心。学習記録・分析など集計処理はRDBの方が扱いやすい</td></tr>
+<tr><td>自前バックエンド（Node.js等 + クラウド）</td><td>△</td><td>△</td><td>◎</td><td>〇</td><td>自由度は最も高いが、認証・インフラ構築・保守を一人で担う負荷が大きい</td></tr>
+</table>
+<p><strong>採用：Supabase（BaaS）</strong><span class="badge adopt">採用</span><br>
+理由：学習記録・教材・単語帳・復習管理はいずれもリレーショナルなデータ構造（科目⇄教材⇄単語のような紐付け）と相性がよく、PostgreSQLベースのSupabaseが適する。認証・DB・ファイルストレージ・定期実行（復習リマインダー等の将来拡張）を単一サービスでカバーでき、個人開発での運用負荷を最小化できる。</p>
+
+<h3>3.3 データベース</h3>
+<table>
+<tr><th>候補</th><th>データ構造適合</th><th>集計・分析のしやすさ</th><th>備考</th></tr>
+<tr><td>PostgreSQL（Supabase標準）</td><td>◎</td><td>◎</td><td>科目・教材・単語・復習の関連データをリレーションで表現しやすく、学習分析のSQL集計も容易</td></tr>
+<tr><td>Firestore（NoSQL）</td><td>〇</td><td>△</td><td>柔軟だが、科目別・教材別の集計や絞り込み検索の実装がやや複雑になりやすい</td></tr>
+</table>
+<p><strong>採用：PostgreSQL</strong><span class="badge adopt">採用</span>（3.2の選定に付随して決定）</p>
+<p>
+要件定義書4.1の決定（資格 → 科目 → 教材 → 単語の階層構造、複数資格の並行管理）を踏まえ、<code>exams</code>（資格）を親とし、<code>subjects</code>（科目）・<code>materials</code>（教材）・<code>words</code>（単語）が外部キーで連なるテーブル構成とする。各テーブルは<code>user_id</code>を持ち、Supabaseの Row Level Security（RLS）で利用者ごとのデータ分離を行う。この構成はリレーショナルDBであるPostgreSQLと親和性が高く、3.2の選定理由（リレーショナルなデータ構造との相性）を裏付ける形となる。
+</p>
+
+<h3>3.4 認証</h3>
+<table>
+<tr><th>候補</th><th>実装コスト</th><th>将来のマルチデバイス同期</th><th>備考</th></tr>
+<tr><td>Supabase Auth（メール／SNSログイン）</td><td>◎</td><td>◎</td><td>DBと統合済みで追加実装がほぼ不要。今後の検討事項「認証方式」にも対応可能</td></tr>
+<tr><td>自前認証実装</td><td>△</td><td>〇</td><td>パスワード管理・セキュリティ対応を自前で担う必要があり、個人開発では負荷が大きい</td></tr>
+</table>
+<p><strong>採用：Supabase Auth</strong><span class="badge adopt">採用</span>（初期リリースからメールログインに加えGoogleログイン等のSNSログインも実装する。Supabase AuthのOAuthプロバイダ設定で追加実装コストを抑えられる）</p>
+
+<h3>3.5 ホスティング／デプロイ</h3>
+<table>
+<tr><th>候補</th><th>Next.jsとの親和性</th><th>運用負荷</th><th>費用</th><th>備考</th></tr>
+<tr><td>Vercel</td><td>◎</td><td>◎</td><td>◎</td><td>Next.js開発元が提供。個人利用は無料枠内で運用可能。デプロイが自動化されている</td></tr>
+<tr><td>AWS（Amplify等）</td><td>〇</td><td>△</td><td>〇</td><td>拡張性は高いが設定項目が多く、個人開発では運用負荷が相対的に高い</td></tr>
+</table>
+<p><strong>採用：Vercel</strong><span class="badge adopt">採用</span><br>
+理由：Next.jsとの統合が最も簡便で、Gitリポジトリへのpushで自動デプロイが可能。個人開発の運用負荷を抑えられる。</p>
+
+<h3>3.6 UIスタイリング</h3>
+<table>
+<tr><th>候補</th><th>実装速度</th><th>レスポンシブ対応</th><th>備考</th></tr>
+<tr><td>Tailwind CSS</td><td>◎</td><td>◎</td><td>ダッシュボード等の細かいレイアウト調整がしやすく、レスポンシブ対応もユーティリティクラスで完結</td></tr>
+<tr><td>CSSフレームワーク（Bootstrap等）</td><td>〇</td><td>〇</td><td>コンポーネントは充実するが、独自デザインの細かい調整はTailwindより手間がかかる</td></tr>
+</table>
+<p><strong>採用：Tailwind CSS</strong><span class="badge adopt">採用</span></p>
+
+<h3>3.7 グラフ・分析（学習分析機能向け）</h3>
+<table>
+<tr><th>候補</th><th>React親和性</th><th>実装コスト</th><th>備考</th></tr>
+<tr><td>Recharts</td><td>◎</td><td>◎</td><td>科目別・教材別の学習時間集計、推移グラフ（4.10 学習分析）をシンプルに実装可能</td></tr>
+<tr><td>Chart.js</td><td>〇</td><td>〇</td><td>機能は豊富だがReact向けラッパーが一枚挟まる分、実装がやや冗長になりやすい</td></tr>
+</table>
+<p><strong>採用：Recharts</strong><span class="badge adopt">採用</span></p>
+
+<h3>3.8 将来拡張（通知・AI解説）に向けた方向性</h3>
+<table>
+<tr><th>拡張機能</th><th>想定技術</th><th>備考</th></tr>
+<tr><td>復習リマインダー通知</td><td>Web Push（Service Worker）＋ Supabase Scheduled Functions</td><td>ブラウザ標準機能で完結でき、追加インフラが不要</td></tr>
+<tr><td>AIによる単語解説</td><td>Anthropic API または OpenAI API</td><td>単語帳データを渡してAPI経由で解説文を生成。Supabase Edge Functions経由での呼び出しを想定</td></tr>
+<tr><td>バッジ・実績機能</td><td>アプリ内ロジック（DBフラグ管理）</td><td>新規サービス導入は不要。既存DBスキーマの拡張で対応可能</td></tr>
+</table>
+
+<h2>4. 採用技術スタック まとめ</h2>
+<table>
+<tr><th>領域</th><th>採用技術</th></tr>
+<tr><td>フロントエンド</td><td>Next.js（React 18 + TypeScript）</td></tr>
+<tr><td>UIスタイリング</td><td>Tailwind CSS</td></tr>
+<tr><td>グラフ・分析</td><td>Recharts</td></tr>
+<tr><td>バックエンド／DB</td><td>Supabase（PostgreSQL）</td></tr>
+<tr><td>認証</td><td>Supabase Auth（メール認証＋Googleログイン等のSNSログインを初期実装）</td></tr>
+<tr><td>ファイルストレージ</td><td>Supabase Storage（教材PDF等を扱う場合に使用）</td></tr>
+<tr><td>ホスティング</td><td>Vercel（フロント／API）＋ Supabase（DB／Auth）</td></tr>
+<tr><td>将来拡張：通知</td><td>Web Push + Supabase Scheduled Functions</td></tr>
+<tr><td>将来拡張：AI解説</td><td>Anthropic API／OpenAI API</td></tr>
+</table>
+
+<h2>5. アーキテクチャ概要</h2>
+<ul>
+<li>ブラウザ（PC／スマートフォン）→ Vercel上のNext.jsアプリ（画面表示・API Routes）</li>
+<li>Next.js（API Routes／Server Actions）→ Supabase（認証・DB・ストレージ）へアクセス</li>
+<li>復習リマインダー等はSupabaseのScheduled Functionsから定期実行し、Web Pushでブラウザへ通知（将来拡張）</li>
+<li>AI解説機能は、Next.js（またはSupabase Edge Functions）から生成AI APIを呼び出す構成とする（将来拡張）</li>
+</ul>
+
+<h2>6. 費用概算（個人利用規模を想定）</h2>
+<table>
+<tr><th>サービス</th><th>目安費用</th><th>備考</th></tr>
+<tr><td>Vercel</td><td>無料枠（Hobbyプラン）</td><td>個人利用のトラフィック規模であれば無料枠内で収まる想定</td></tr>
+<tr><td>Supabase</td><td>無料枠（Freeプラン）</td><td>DB容量・API呼び出し数が増えた場合はProプラン（月額約$25〜）への移行を検討</td></tr>
+<tr><td>生成AI API（将来拡張時）</td><td>従量課金</td><td>単語解説の呼び出し頻度に応じた費用が発生。導入時に別途見積もりが必要</td></tr>
+</table>
+
+<h2>7. リスク・今後の検討事項</h2>
+<ul>
+<li>Supabase無料枠の制限（DB容量・帯域）を超えた場合の移行コストを事前に把握しておく</li>
+<li>スマートフォンからの利用感（レスポンシブ対応の実機確認）を早期に検証する</li>
+<li>要件定義書「7. 今後の検討事項」にある認証方式・データエクスポート・通知手段・マルチデバイス同期方式は、本選定（Supabase Auth／Web Push／PostgreSQL）を前提に別途詳細設計で具体化する</li>
+<li>AI解説機能導入時は、利用するAPIの費用体系とレート制限を踏まえた設計が必要</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+# dependencies
+web/node_modules
+web/.pnp
+web/.pnp.*
+web/.yarn/*
+!web/.yarn/patches
+!web/.yarn/plugins
+!web/.yarn/releases
+!web/.yarn/versions
+
+# testing
+web/coverage
+
+# next.js
+web/.next/
+web/out/
+
+# production
+web/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (secrets — never commit)
+.env
+.env.local
+.env.*.local
+
+# vercel
+web/.vercel
+
+# claude code local settings (personal, machine-specific)
+.claude/settings.local.json
+
+# typescript
+*.tsbuildinfo
+web/next-env.d.ts

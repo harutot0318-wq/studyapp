@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>資格勉強向け学習管理アプリ 要件定義書</title>
+<style>
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    max-width: 860px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.8;
+    color: #222;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 24px;
+    border-bottom: 3px solid #2c5aa0;
+    padding-bottom: 12px;
+    color: #1a3a63;
+  }
+  h2 {
+    font-size: 19px;
+    margin-top: 40px;
+    padding: 8px 12px;
+    background: #eaf1fb;
+    border-left: 5px solid #2c5aa0;
+    color: #1a3a63;
+  }
+  h3 {
+    font-size: 16px;
+    margin-top: 24px;
+    color: #2c5aa0;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 24px;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #2c5aa0;
+    color: #fff;
+    font-weight: 600;
+  }
+  tr:nth-child(even) { background: #f6f9fd; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .meta {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e0e0e0;
+    color: #444;
+    margin-left: 6px;
+  }
+  .must { background: #dbeee0; color: #1e6b34; }
+  .should { background: #fdf3d6; color: #8a6d00; }
+  .could { background: #f0e6f6; color: #6a3a8f; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>資格勉強向け学習管理アプリ 要件定義書</h1>
+<div class="meta">作成日：2026年7月23日</div>
+
+<h2>1. 概要・目的</h2>
+<p>
+資格取得を目指す学習者が、学習計画・学習記録・教材管理・復習を一元管理し、効率よく継続して学習できる環境を提供するWebアプリケーション。
+日々の学習の「記録のしにくさ」「教材や復習の管理の煩雑さ」「モチベーション維持の難しさ」を解消し、試験本番までの学習を可視化・習慣化することを目指す。
+</p>
+
+<h2>2. 前提条件</h2>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>提供形態</td><td>Webアプリケーション（ブラウザで動作。将来的にスマートフォンからの利用も想定）</td></tr>
+<tr><td>想定利用者</td><td>資格試験の合格を目指す個人学習者（学生・社会人）</td></tr>
+<tr><td>利用人数規模</td><td>個人利用が基本（1アカウント＝1利用者。他者との共有機能は対象外）</td></tr>
+<tr><td>対応資格・科目</td><td>特定の資格に限定せず、利用者が自由に資格・科目・教材を登録できる汎用設計とする。データは「資格 → 科目 → 教材 → 単語」の階層構造を持ち、複数の資格を並行して登録・管理できる</td></tr>
+</table>
+
+<h2>3. 対象ユーザーと主な利用シーン</h2>
+<ul>
+<li>複数の資格を並行して学習している場合、画面上部で対象資格を切り替えてから作業する</li>
+<li>毎日の学習開始時にダッシュボードを開き、当日の目標とタスクを確認する</li>
+<li>学習が終わったタイミングで学習時間・内容を記録する</li>
+<li>問題演習中にわからない単語が出てきたら、その場で単語帳に登録する</li>
+<li>週末などにまとめて学習分析画面を見て、科目・教材ごとの偏りを把握する</li>
+<li>復習予定日が来たら通知・一覧から復習を実施し、理解度を更新する</li>
+</ul>
+
+<h2>4. 機能要件</h2>
+<p class="meta">本バージョンより、Should項目（4.9〜4.10）もワイヤーフレームの設計対象に含める。Must／Shouldのラベルは要件としての重要度を表すものであり、初期リリースの画面スコープを限定するものではない。</p>
+
+<h3>4.1 資格管理・切替 <span class="badge must">Must</span></h3>
+<ul>
+<li>資格の登録・編集・削除（資格名、試験日）</li>
+<li>複数資格の並行登録・管理（例：簿記論とTOEICを同時に学習する場合など）</li>
+<li>画面上部などでの対象資格の切替（以降の科目・教材・単語帳・学習記録・タスクは、切替中の資格に属するものが対象となる）</li>
+<li>試験日までの残り日数の自動表示</li>
+</ul>
+
+<h3>4.2 ダッシュボード <span class="badge must">Must</span></h3>
+<p class="meta">表示内容は、原則として現在切替中の資格に関するものとする（複数資格を並行登録している場合、資格を切り替えると表示も切り替わる）。</p>
+<table>
+<tr><th>機能</th><th>内容</th></tr>
+<tr><td>今日の学習時間</td><td>当日に記録された学習時間の合計を表示</td></tr>
+<tr><td>今週の学習時間</td><td>週（月曜〜日曜など）単位の学習時間合計を表示</td></tr>
+<tr><td>連続学習日数</td><td>学習記録が途切れず続いている日数（ストリーク）を表示</td></tr>
+<tr><td>今日の目標達成率</td><td>設定した日次目標に対する実績の達成率（%）を表示</td></tr>
+<tr><td>試験までの残り日数</td><td>現在切替中の資格に登録済みの試験日から逆算した残り日数を表示</td></tr>
+</table>
+
+<h3>4.3 学習記録 <span class="badge must">Must</span></h3>
+<ul>
+<li>学習時間の記録（開始・終了時刻または時間数の入力）</li>
+<li>学習内容・メモの記録（自由記述）</li>
+<li>使用教材の登録（教材管理機能に登録済みの教材から選択。選択候補は現在切替中の資格に属する教材に限定される）</li>
+<li>科目の登録・選択（科目は現在切替中の資格に属するものとして登録される）</li>
+<li>学習履歴の一覧閲覧（日付・科目・教材・時間・メモで絞り込み可能）</li>
+</ul>
+
+<h3>4.4 タスク管理 <span class="badge must">Must</span></h3>
+<ul>
+<li>今日やることの登録（自由入力によるタスク作成）</li>
+<li>完了・未完了のチェック管理</li>
+<li>優先度設定（高・中・低など）</li>
+</ul>
+
+<h3>4.5 教材管理 <span class="badge must">Must</span></h3>
+<ul>
+<li>教材の登録・編集・削除（現在切替中の資格の配下、科目に紐づけて登録する）</li>
+<li>教材種別の設定（参考書／問題集／動画／その他）</li>
+<li>教材ごとの学習進捗管理（例：ページ数・章・進捗率）</li>
+<li>教材ごとの学習時間の自動集計（学習記録との連携）</li>
+</ul>
+
+<h3>4.6 わからなかった単語帳 <span class="badge must">Must</span></h3>
+<ul>
+<li>単語の登録</li>
+<li>意味・解説・メモの登録</li>
+<li>タグ付け（複数タグ可）</li>
+<li>教材との関連付け（どの教材で出てきた単語かを紐付け。教材を介して資格・科目にも間接的に紐づく）</li>
+<li>理解度管理（例：未理解／うろ覚え／理解済みの3段階など）</li>
+<li>解決済み・未解決の管理</li>
+<li>表示範囲の切替（既定は現在切替中の資格に属する単語のみを表示。切替により、登録済みの全資格の単語を横断して一覧表示することも可能。単語の新規登録は、切替表示の状態によらず現在切替中の資格に対して行われる）</li>
+</ul>
+
+<h3>4.7 単語検索 <span class="badge must">Must</span></h3>
+<ul>
+<li>単語名によるキーワード検索</li>
+<li>タグによる絞り込み検索</li>
+<li>教材による絞り込み検索</li>
+<li>科目による絞り込み検索</li>
+<li>未解決の単語のみを表示するフィルタ</li>
+<li>検索範囲は既定で現在切替中の資格に属する単語とするが、4.6と同様に切替により全資格を横断した検索も可能とする</li>
+</ul>
+
+<h3>4.8 復習管理 <span class="badge must">Must</span></h3>
+<ul>
+<li>復習予定日の設定（単語帳・教材単位を想定）</li>
+<li>復習状況の管理（未実施／実施済み）</li>
+<li>復習実施後の理解度更新</li>
+</ul>
+
+<h3>4.9 目標管理 <span class="badge should">Should</span></h3>
+<ul>
+<li>日・週・月単位の学習目標の設定（学習時間など）</li>
+<li>目標に対する達成率の表示</li>
+</ul>
+
+<h3>4.10 学習分析 <span class="badge should">Should</span></h3>
+<ul>
+<li>科目別の学習時間集計・表示</li>
+<li>教材別の学習時間集計・表示</li>
+<li>学習時間の推移表示（日次・週次など）</li>
+<li>継続学習日数の推移表示</li>
+</ul>
+
+<h2>5. 非機能要件</h2>
+<table>
+<tr><th>分類</th><th>内容</th></tr>
+<tr><td>ユーザビリティ</td><td>毎日使うことを前提に、学習記録の入力は数タップ・数クリックで完結できる簡便さを重視する</td></tr>
+<tr><td>データ保持</td><td>学習履歴・単語帳・教材データは利用者ごとに継続的に蓄積され、消失しないこと</td></tr>
+<tr><td>可用性</td><td>学習の妨げにならないよう、通常利用時間帯において安定して動作すること</td></tr>
+<tr><td>拡張性</td><td>今後の追加機能（AI解説、通知、グラフ分析、バッジ機能等）を後付けしやすい構成とする</td></tr>
+<tr><td>対応環境</td><td>PC・スマートフォンいずれのブラウザからも閲覧・操作できることが望ましい（レスポンシブ対応）</td></tr>
+</table>
+
+<h2>6. 今後追加したい機能（将来拡張）</h2>
+<ul>
+<li>AIによる単語解説 <span class="badge could">Could</span></li>
+<li>復習リマインダー（通知機能） <span class="badge could">Could</span></li>
+<li>グラフによる学習分析の視覚化 <span class="badge could">Could</span></li>
+<li>バッジ・実績機能によるモチベーション向上施策 <span class="badge could">Could</span></li>
+</ul>
+
+<h2>7. 今後の検討事項</h2>
+<ul>
+<li><s>ユーザー認証・アカウント管理の方式（メール／SNSログイン等）</s>　→ 決定：メールログイン＋Googleログイン等のSNSログインを初期リリースから実装（技術選定書 3.4 参照）</li>
+<li>データのエクスポート・バックアップ機能の要否　→ 決定：本リリース（MVP）のスコープには含めない。将来拡張として別途検討</li>
+<li><s>資格・科目・教材・単語のデータ構造、および複数資格への対応方針</s>　→ 決定：「資格 → 科目 → 教材 → 単語」の階層構造とし、資格は利用者が自由に登録する（マスタ選択式は採用しない）。複数資格の並行登録・切替に対応する（4.1 資格管理・切替 参照）</li>
+<li>目標達成率・復習予定日などの通知手段（アプリ内通知／メール／プッシュ通知）</li>
+<li>マルチデバイス利用時のデータ同期方式</li>
+</ul>
+
+</body>
+</html>
