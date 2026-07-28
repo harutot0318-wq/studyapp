@@ -6,16 +6,32 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 
+  console.error("DEBUG callback:", {
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    origin,
+    fullUrl: request.url,
+    cookieNames: request.headers.get("cookie")?.split(";").map((c) => c.split("=")[0].trim()),
+  });
+
   if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+    try {
+      const supabase = await createClient();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error) {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+      console.error("exchangeCodeForSession failed:", error.message, error.status);
+      return NextResponse.redirect(
+        `${origin}/auth/error?reason=${encodeURIComponent(error.message)}`,
+      );
+    } catch (e) {
+      const err = e as Error;
+      console.error("exchangeCodeForSession threw:", err.message, "\n", err.stack);
+      return NextResponse.redirect(
+        `${origin}/auth/error?reason=${encodeURIComponent("THROW: " + err.message)}`,
+      );
     }
-    console.error("exchangeCodeForSession failed:", error.message, error.status);
-    return NextResponse.redirect(
-      `${origin}/auth/error?reason=${encodeURIComponent(error.message)}`,
-    );
   }
 
   console.error("auth callback called without a code param");
