@@ -1,51 +1,83 @@
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+// NOTE: exchangeCodeForSession()'s internal fetch() call throws
+// "Cannot convert argument to a ByteString ..." on Vercel's production
+// (Turbopack) build only - a known class of Next.js/Turbopack bug where
+// unrelated Unicode content elsewhere in the app corrupts header
+// construction in a compiled chunk. It never reproduces in `next dev`.
+// Workaround: do the PKCE code exchange with a plain fetch() ourselves,
+// bypassing whatever bundled code path is broken, then hand the tokens
+// to supabase-js just to persist the session via our cookie handlers.
+async function exchangeCodeManually(code: string) {
+  const cookieStore = await cookies();
+  const projectRef = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split(".")[0];
+  const verifierCookieName = `sb-${projectRef}-auth-token-code-verifier`;
+  const rawCookie = cookieStore.get(verifierCookieName)?.value;
+
+  if (!rawCookie) {
+    return { error: "code verifier cookie missing" };
+  }
+
+  const codeVerifier = JSON.parse(
+    Buffer.from(rawCookie.replace("base64-", ""), "base64").toString("utf-8"),
+  ) as string;
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=pkce`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      },
+      body: JSON.stringify({ auth_code: code, code_verifier: codeVerifier }),
+    },
+  );
+
+  if (!res.ok) {
+    const body = await res.text();
+    return { error: `token endpoint ${res.status}: ${body}` };
+  }
+
+  const tokens = (await res.json()) as {
+    access_token: string;
+    refresh_token: string;
+  };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.setSession({
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+  });
+
+  return { error: error?.message };
+}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 
-  console.error("DEBUG callback:", {
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    origin,
-    fullUrl: request.url,
-    cookieNames: request.headers.get("cookie")?.split(";").map((c) => c.split("=")[0].trim()),
-  });
-
   if (code) {
     try {
-      const supabase = await createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { error } = await exchangeCodeManually(code);
       if (!error) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      console.error(
-        "exchangeCodeForSession failed (full):",
-        JSON.stringify(error, Object.getOwnPropertyNames(error)),
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cause = (error as any).cause;
-      if (cause) {
-        console.error(
-          "cause:",
-          JSON.stringify(cause, Object.getOwnPropertyNames(cause)),
-        );
-      }
+      console.error("manual code exchange failed:", error);
       return NextResponse.redirect(
-        `${origin}/auth/error?reason=${encodeURIComponent(error.message)}`,
+        `${origin}/auth/error?reason=${encodeURIComponent(error)}`,
       );
     } catch (e) {
       const err = e as Error;
-      console.error("exchangeCodeForSession threw:", err.message, "\n", err.stack);
+      console.error("manual code exchange threw:", err.message, "\n", err.stack);
       return NextResponse.redirect(
         `${origin}/auth/error?reason=${encodeURIComponent("THROW: " + err.message)}`,
       );
     }
   }
 
-  console.error("auth callback called without a code param");
-  // 失敗した場合はエラーを伝えるページに戻す
   return NextResponse.redirect(`${origin}/auth/error`);
 }
