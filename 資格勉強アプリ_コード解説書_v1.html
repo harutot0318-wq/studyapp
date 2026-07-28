@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>資格勉強向け学習管理アプリ コード解説書</title>
+<style>
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.85;
+    color: #222;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 24px;
+    border-bottom: 3px solid #2c5aa0;
+    padding-bottom: 12px;
+    color: #1a3a63;
+  }
+  h2 {
+    font-size: 19px;
+    margin-top: 44px;
+    padding: 8px 12px;
+    background: #eaf1fb;
+    border-left: 5px solid #2c5aa0;
+    color: #1a3a63;
+  }
+  h3 {
+    font-size: 16px;
+    margin-top: 28px;
+    color: #2c5aa0;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  h4 {
+    font-size: 14px;
+    margin-top: 20px;
+    color: #444;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 24px;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 7px 9px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #2c5aa0; color: #fff; font-weight: 600; }
+  tr:nth-child(even) { background: #f6f9fd; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  li { margin: 4px 0; }
+  .meta { font-size: 13px; color: #666; margin-bottom: 30px; }
+  code {
+    background: #f0f0f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: Consolas, "SF Mono", monospace;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #e2e2f0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin: 10px 0 20px;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  .file-label {
+    display: inline-block;
+    font-size: 11px;
+    color: #888;
+    background: #eee;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-family: Consolas, monospace;
+  }
+  .box {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    background: #fbfbfb;
+  }
+  .box.tip { border-left: 4px solid #2c9e5b; background: #f2fbf5; }
+  .box.warn { border-left: 4px solid #c98a12; background: #fdf7ea; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e0e0e0;
+    color: #444;
+    margin-left: 6px;
+  }
+  .server { background: #dbeee0; color: #1e6b34; }
+  .client { background: #f0e6f6; color: #6a3a8f; }
+  .toc { background: #f6f9fd; border: 1px solid #dbe6f5; border-radius: 8px; padding: 14px 20px; }
+  .toc ul { margin: 4px 0; }
+  .qa dt { font-weight: 700; margin-top: 16px; color: #1a3a63; }
+  .qa dd { margin: 4px 0 0 0; color: #333; }
+</style>
+</head>
+<body>
+
+<h1>資格勉強向け学習管理アプリ コード解説書</h1>
+<div class="meta">作成日：2026年7月29日　／　対象：実装済みコード（Next.js 16 + Supabase）　／　読者：このアプリのコードを初めて読む人向け</div>
+
+<div class="toc">
+<strong>目次</strong>
+<ul>
+<li><a href="#s1">1. このアプリの全体像</a></li>
+<li><a href="#s2">2. 知っておくと読みやすくなる4つの概念</a></li>
+<li><a href="#s3">3. 1つの機能を最初から最後まで追ってみる（タスク管理）</a></li>
+<li><a href="#s4">4. 「資格の切替」はどう実現しているか</a></li>
+<li><a href="#s5">5. ログインの仕組み</a></li>
+<li><a href="#s6">6. データベース設計の要点</a></li>
+<li><a href="#s7">7. 開発中に遭遇した不具合と直し方（実体験）</a></li>
+<li><a href="#s8">8. 用語集</a></li>
+<li><a href="#s9">9. 面接で聞かれそうな質問と答え方のヒント</a></li>
+</ul>
+</div>
+
+<h2 id="s1">1. このアプリの全体像</h2>
+
+<p>
+このアプリは大きく2つの部分でできています。
+</p>
+<ul>
+<li><strong>フロントエンド兼バックエンド</strong>：Next.js（<code>web/</code>フォルダ）。画面の表示と、データベースとのやり取りの両方をこの1つのプロジェクトが担当します</li>
+<li><strong>データベース</strong>：Supabase（PostgreSQL）。ユーザー情報・資格・科目・教材・単語などのデータを保存します</li>
+</ul>
+
+<p>
+昔ながらのWebアプリだと「フロントエンド（React）」と「バックエンド（API）」を別々に作ることが多いですが、Next.jsは<strong>1つのプロジェクトの中で両方を書ける</strong>のが特徴です。この仕組みを支えているのが「サーバーコンポーネント」と「Server Actions」という機能で、次の章で説明します。
+</p>
+
+<h3>1.1 フォルダ構成</h3>
+<pre><code>web/src/
+├── app/
+│   ├── (app)/              ← ログインしないと入れないページ群
+│   │   ├── layout.tsx      ← サイドバー・ログイン確認（全ページ共通の外枠）
+│   │   ├── page.tsx        ← ダッシュボード（"/"）
+│   │   ├── exams/          ← 資格管理
+│   │   ├── study-log/      ← 学習記録
+│   │   ├── tasks/          ← タスク管理
+│   │   ├── materials/      ← 教材管理
+│   │   ├── words/          ← 単語帳
+│   │   ├── word-search/    ← 単語検索
+│   │   ├── review/         ← 復習管理
+│   │   ├── goals/          ← 目標管理
+│   │   └── analysis/       ← 学習分析
+│   ├── auth/                ← ログイン処理・OAuthコールバック
+│   └── login/                ← ログイン画面（ログイン不要でアクセス可）
+├── components/
+│   ├── ui/                  ← カード・バッジなど共通の見た目部品
+│   ├── charts/               ← グラフ（Recharts）
+│   └── nav-sidebar.tsx       ← サイドバーのリンク一覧
+└── lib/
+    ├── supabase/             ← データベースへの接続設定
+    ├── exams/ tasks/ words/ …  ← 機能ごとの「データを取ってくる関数」置き場
+    └── dates.ts               ← 日付計算の共通処理
+</code></pre>
+
+<p>
+機能ごとに（<code>exams/</code>、<code>tasks/</code>、<code>words/</code>…）フォルダが分かれていて、それぞれの中に「画面（<code>page.tsx</code>）」と「データ更新処理（<code>actions.ts</code>）」がセットで入っている、という規則性があります。1つの画面を読むときは、まずこの2ファイルを見れば大体分かります。
+</p>
+
+<h2 id="s2">2. 知っておくと読みやすくなる4つの概念</h2>
+
+<h3>2.1 サーバーコンポーネント と クライアントコンポーネント <span class="badge server">重要</span></h3>
+<p>
+Next.jsのコンポーネント（画面の部品）には2種類あります。
+</p>
+<table>
+<tr><th></th><th>サーバーコンポーネント</th><th>クライアントコンポーネント</th></tr>
+<tr><td>動く場所</td><td>サーバー側だけ</td><td>ブラウザ側（ユーザーのPC）</td></tr>
+<tr><td>書き方</td><td>何もつけない（デフォルト）</td><td>ファイルの先頭に<code>"use client"</code>と書く</td></tr>
+<tr><td>できること</td><td>データベースに直接アクセスできる</td><td>クリックなどのイベント処理、ブラウザのAPI利用</td></tr>
+<tr><td>このアプリでの例</td><td>ほぼ全ページ（<code>page.tsx</code>）</td><td>グラフ（<code>bar-chart.tsx</code>）、サイドバーの現在地表示（<code>nav-sidebar.tsx</code>）</td></tr>
+</table>
+<p>
+このアプリは<strong>ほとんどがサーバーコンポーネント</strong>です。理由はシンプルで、「今どの資格が選ばれているか」「単語一覧」などのデータは全部データベースにあり、それをそのままサーバー側で取得して表示すればよいからです。ブラウザ側で動くJavaScriptが少なくて済むので、ページの表示も速くなります。
+</p>
+<p>
+逆に、グラフ描画ライブラリ（Recharts）はブラウザの画面サイズを見ながら描画する必要があるため、これだけは<code>"use client"</code>をつけたクライアントコンポーネントにしています。
+</p>
+
+<div class="box tip">
+<strong>読むときのコツ：</strong> ファイルの先頭に<code>"use client"</code>があるかどうかを確認するだけで、「これはブラウザで動くコードか、サーバーでしか動かないコードか」がすぐ分かります。
+</div>
+
+<h3>2.2 Server Actions（フォーム送信 = サーバー関数呼び出し）</h3>
+<p>
+普通のWebアプリでは「フォームを送信する」→「APIにリクエストを送る」→「APIがデータベースを更新する」という3ステップを自分で書く必要があります。Next.jsの<strong>Server Actions</strong>という機能を使うと、これを1ステップで書けます。
+</p>
+<div class="file-label">例：タスク追加フォーム（簡略化）</div>
+<pre><code>// page.tsx（画面）
+&lt;form action={createTask}&gt;
+  &lt;input name="title" /&gt;
+  &lt;button type="submit"&gt;追加&lt;/button&gt;
+&lt;/form&gt;
+
+// actions.ts（サーバー側で実行される関数）
+"use server";
+export async function createTask(formData: FormData) {
+  const title = formData.get("title");
+  await supabase.from("tasks").insert({ title });
+}
+</code></pre>
+<p>
+<code>&lt;form action={createTask}&gt;</code>と書くだけで、フォーム送信時に<code>createTask</code>関数がサーバー側で実行されます。ボタンを押す→データベースに保存、の間にAPIを自分で作る必要がありません。ファイルの先頭に<code>"use server"</code>と書かれている関数がServer Actionsです。
+</p>
+
+<h3>2.3 Supabaseとの接続（2種類のクライアント）</h3>
+<p>
+このアプリでは<code>src/lib/supabase/</code>フォルダに、データベースへの接続を作る関数が2つあります。
+</p>
+<ul>
+<li><code>client.ts</code>：ブラウザ側から使う用（今回はほぼ未使用）</li>
+<li><code>server.ts</code>：サーバー側（ページ・Server Actions）から使う用。ほぼ全部の機能がこちらを使っています</li>
+</ul>
+<p>
+なぜ分かれているかというと、ログイン情報（Cookie）の読み書き方法がサーバー側とブラウザ側で違うためです。<code>server.ts</code>は<code>next/headers</code>の<code>cookies()</code>を使ってCookieを読み書きします。
+</p>
+
+<h3>2.4 RLS（Row Level Security）</h3>
+<p>
+データベース側の安全装置です。全テーブルに「<code>user_id</code>が自分のIDと一致する行しか見えない・操作できない」というルールがかかっています。これにより、アプリのコードに多少バグがあっても、<strong>他人のデータが見える・書き換えられるという事故がデータベース側で防がれます</strong>。詳しくは<a href="資格勉強アプリ_データ設計書_v1.html">データ設計書</a>の「RLS方針」を参照してください。
+</p>
+
+<h2 id="s3">3. 1つの機能を最初から最後まで追ってみる（タスク管理）</h2>
+<p>
+概念だけだと分かりにくいので、実際に「タスク管理」画面が表示されるまでの流れを、コードを見ながら追います。
+</p>
+
+<h3>ステップ1：URLにアクセスすると何が動くか</h3>
+<p>
+<code>/tasks</code>にアクセスすると、まず<code>src/app/(app)/layout.tsx</code>が実行されます。これは<code>(app)</code>フォルダ配下の全ページに共通する「外枠」です。
+</p>
+<div class="file-label">src/app/(app)/layout.tsx（抜粋）</div>
+<pre><code>const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+
+if (!user) {
+  redirect("/login");   // ログインしていなければログイン画面へ
+}
+
+return (
+  &lt;div className="flex min-h-screen bg-gray-50"&gt;
+    &lt;aside&gt;...サイドバー...&lt;/aside&gt;
+    &lt;main&gt;{children}&lt;/main&gt;   ← ここに各ページの中身が入る
+  &lt;/div&gt;
+);
+</code></pre>
+<p>
+ここでログインチェックをしているので、<strong>個別のページ側ではログインチェックを書かなくてよい</strong>ことに注目してください。これはNext.jsの「レイアウトは配下の全ページに自動的にかぶさる」という仕組みを利用しています。
+</p>
+
+<h3>ステップ2：データ取得（<code>lib/tasks/queries.ts</code>）</h3>
+<div class="file-label">src/lib/tasks/queries.ts</div>
+<pre><code>export async function getTasks(examId: string): Promise&lt;Task[]&gt; {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("id, title, priority, is_done")
+    .eq("exam_id", examId)
+    .order("is_done", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+</code></pre>
+<p>
+<code>.from("tasks")</code>で「tasksテーブルを見る」、<code>.eq("exam_id", examId)</code>で「今の資格のタスクだけに絞る」、<code>.order(...)</code>で並び順を指定しています。SQLを直接書かなくても、こういうメソッドチェーンでクエリを組み立てられるのがSupabaseクライアントの特徴です。
+</p>
+
+<h3>ステップ3：画面に表示する（<code>tasks/page.tsx</code>）</h3>
+<div class="file-label">src/app/(app)/tasks/page.tsx（抜粋）</div>
+<pre><code>export default async function TasksPage() {
+  const activeExam = await getActiveExam();       // 今どの資格を見ているか
+  const tasks = await getTasks(activeExam.id);    // そのタスク一覧
+
+  return (
+    &lt;div&gt;
+      {tasks.map((task) =&gt; (
+        &lt;div key={task.id}&gt;{task.title}&lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>
+<code>page.tsx</code>の関数に<code>async</code>がついているのがポイントです。サーバーコンポーネントは<code>async function</code>にでき、その中で直接<code>await</code>してデータベースからデータを取ってこられます。これも「フロントとバックが1つになっている」Next.jsらしい書き方です。
+</p>
+
+<h3>ステップ4：タスクを追加する（<code>tasks/actions.ts</code>）</h3>
+<div class="file-label">src/app/(app)/tasks/actions.ts（抜粋）</div>
+<pre><code>"use server";
+
+export async function createTask(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const examId = formData.get("exam_id") as string;
+  const title = (formData.get("title") as string)?.trim();
+  if (!examId || !title) return;
+
+  await supabase.from("tasks").insert({ user_id: user.id, exam_id: examId, title });
+  revalidatePath("/tasks");   // 画面のデータを最新に更新
+}
+</code></pre>
+<p>
+<code>revalidatePath("/tasks")</code>が重要です。データを追加しただけでは画面は自動更新されないので、「<code>/tasks</code>のデータは古くなったので、次に見るときは取り直してね」とNext.jsに伝えています。
+</p>
+
+<p>
+他の機能（学習記録・教材管理・単語帳など）も、基本的にこの4ステップ（レイアウトでログイン確認 → queries.tsでデータ取得 → page.tsxで表示 → actions.tsで更新）の繰り返しです。1つの機能の流れを理解すれば、他の画面もほぼ同じパターンで読めます。
+</p>
+
+<h2 id="s4">4. 「資格の切替」はどう実現しているか</h2>
+<p>
+このアプリの特徴的な設計に「複数資格を並行管理し、いつでも切り替えられる」というものがあります。これは<strong>Cookie</strong>を使って実現しています。
+</p>
+<div class="file-label">src/lib/exams/active.ts</div>
+<pre><code>export async function getActiveExam(): Promise&lt;Exam | null&gt; {
+  const exams = await getExams();               // 自分が登録した資格一覧
+  if (exams.length === 0) return null;
+
+  const cookieStore = await cookies();
+  const cookieId = cookieStore.get("active_exam_id")?.value;
+  return exams.find((e) =&gt; e.id === cookieId) ?? exams[0];  // 見つからなければ先頭にフォールバック
+}
+</code></pre>
+<p>
+「資格管理」画面で「この資格に切替」ボタンを押すと、<code>active_exam_id</code>というCookieにその資格のIDが保存されます。以降、ほぼ全てのページで最初に<code>getActiveExam()</code>を呼び、それを起点にデータを絞り込んでいます（例：<code>getTasks(activeExam.id)</code>）。
+</p>
+<div class="box tip">
+専用のテーブルを作らずCookieだけで実現しているのがポイントです。ログインと同じ仕組みで扱えるため、余計なテーブル・複雑さが増えません。
+</div>
+
+<h2 id="s5">5. ログインの仕組み</h2>
+<p>
+Googleログインの流れは次のようになっています。
+</p>
+<ol>
+<li>「Googleでログイン」ボタン → Server Action <code>signInWithGoogle()</code> が実行される</li>
+<li>Supabaseに「Googleでログインしたい」とリクエストし、Googleのログイン画面のURLをもらって、そこにリダイレクトする</li>
+<li>ユーザーがGoogleでログインすると、Googleは<code>/auth/callback</code>というURLに「認証コード」付きで戻してくる</li>
+<li><code>/auth/callback/route.ts</code>がその認証コードを本物のログインセッション（Cookie）に交換する</li>
+<li>以降のアクセスでは、<code>src/proxy.ts</code>（ミドルウェア）が毎回セッションの有効期限を確認・更新する</li>
+</ol>
+<p>
+この「毎回セッションを確認する」役割を持つのが<code>src/proxy.ts</code>です。Next.js 15までは<code>middleware.ts</code>という名前でしたが、Next.js 16からは<code>proxy.ts</code>という名前に変わりました（機能は同じです）。
+</p>
+
+<h2 id="s6">6. データベース設計の要点</h2>
+<p>
+詳細は<a href="資格勉強アプリ_データ設計書_v1.html">データ設計書</a>にER図とテーブル定義がありますが、コードを読むうえで知っておくと良い点だけ挙げます。
+</p>
+<ul>
+<li>データは <code>資格(exams) → 科目(subjects) → 教材(materials) → 単語(words)</code> という親子関係になっている</li>
+<li>単語の「タグ」は多対多（1つの単語に複数タグ、1つのタグを複数単語に）なので、<code>tags</code>テーブルと<code>word_tags</code>という中間テーブルの2つに分かれている</li>
+<li>「復習」は単語 or 教材のどちらか一方だけを対象にする、という制約がテーブル自体（CHECK制約）にかかっている</li>
+</ul>
+
+<h2 id="s7">7. 開発中に遭遇した不具合と直し方（実体験）</h2>
+<p>
+実際に開発中にハマったバグを2つ紹介します。動くコードを読むだけでなく「なぜそう書かれているか」を知ると理解が深まりますし、面接で「苦労した点は？」と聞かれたときにそのまま使える話です。
+</p>
+
+<h3>7.1 タイムゾーンのバグ（連続学習日数が0日と表示される）</h3>
+<div class="box warn">
+<strong>症状：</strong>今日90分勉強したのに、ダッシュボードの「連続学習日数」が0日と表示された。
+</div>
+<p>
+原因は、日付を文字列にする処理で<code>Date.toISOString()</code>を使っていたことでした。この関数は<strong>協定世界時（UTC）</strong>に変換してから文字列にします。サーバーは日本時間（JST、UTC+9）で動いているため、「日本時間の今日0時」は「UTCでは昨日の15時」になり、日付が1日ずれていました。
+</p>
+<pre><code>// バグがあった書き方
+d.toISOString().slice(0, 10)   // UTCに変換されるため日付がずれる
+
+// 直した書き方（ローカルの年月日をそのまま使う）
+`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`
+</code></pre>
+<p>
+この修正は<code>src/lib/dates.ts</code>の<code>toDateStr()</code>関数にまとめてあり、日付を文字列化する処理は必ずこの関数を通すようにしています。
+</p>
+
+<h3>7.2 Turbopack本番ビルドのByteStringエラー</h3>
+<div class="box warn">
+<strong>症状：</strong>ローカルでは問題なくログインできるのに、Vercel本番環境だけ「<code>Cannot convert argument to a ByteString...</code>」というエラーでログインが失敗する。
+</div>
+<p>
+調査の結果、Supabaseのログイン処理（<code>exchangeCodeForSession</code>）が内部でサーバー間通信のヘッダーを組み立てる際に、Next.js 16のTurbopack本番ビルド特有の不具合でエラーになっていることが分かりました（<code>next dev</code>では再現しない）。ローカルの本番ビルド（<code>next build && next start</code>）でも再現することを確認し、原因を「アプリ側の設定ミス」ではなく「ビルドツールの不具合」だと切り分けました。
+</p>
+<p>
+最終的な対処は、ライブラリの内部処理を使わず、<strong>自分でPKCE認証コードの交換処理を書く</strong ことでした（<code>src/app/auth/callback/route.ts</code>）。
+</p>
+<div class="box tip">
+このバグ調査は、「ローカルでは動くが本番だけ動かない」ときにどう切り分けるかの良い実例です。①ローカルで本番相当のビルドを再現する、②公式ドキュメント・既知のIssueを検索する、③ライブラリ内部を信頼しすぎず自前実装に置き換える、という手順を踏みました。
+</div>
+
+<h2 id="s8">8. 用語集</h2>
+<table>
+<tr><th>用語</th><th>意味</th></tr>
+<tr><td>JSX / TSX</td><td>JavaScript（TypeScript）の中にHTMLのようなタグを書ける記法。<code>.tsx</code>ファイルで使う</td></tr>
+<tr><td>async / await</td><td>「時間のかかる処理（データベースへの問い合わせなど）が終わるまで待つ」ための書き方</td></tr>
+<tr><td>Promise</td><td>「まだ終わっていないけど、いずれ結果が返ってくる処理」を表すオブジェクト</td></tr>
+<tr><td>props</td><td>コンポーネントに渡す引数のようなもの。例：<code>&lt;Badge variant="red"&gt;</code>の<code>variant</code></td></tr>
+<tr><td>コンポーネント</td><td>画面の部品を表す関数（例：<code>Card</code>、<code>TasksPage</code>）</td></tr>
+<tr><td>ルーティング</td><td>URLとページの対応付け。Next.jsでは<code>app/</code>配下のフォルダ構造がそのままURLになる</td></tr>
+<tr><td>Cookie</td><td>ブラウザに保存される小さなデータ。ログイン状態や「今選んでいる資格」を覚えておくのに使う</td></tr>
+<tr><td>環境変数</td><td>コードに直接書きたくない設定値（接続先URLなど）を、<code>.env.local</code>など外部ファイルから読み込む仕組み</td></tr>
+</table>
+
+<h2 id="s9">9. 面接で聞かれそうな質問と答え方のヒント</h2>
+<dl class="qa">
+<dt>Q. なぜこの技術構成（Next.js + Supabase）を選んだのですか？</dt>
+<dd>A. 個人開発なので運用負荷を抑えたかったこと、データが「資格→科目→教材→単語」というリレーショナルな構造を持つためPostgreSQLと相性が良いことを、<a href="資格勉強アプリ_技術選定書_v2.html">技術選定書</a>で他候補（Firebase等）と比較して決めた、と説明できます。</dd>
+
+<dt>Q. サーバーコンポーネントとクライアントコンポーネントはどう使い分けましたか？</dt>
+<dd>A. 基本は全部サーバーコンポーネントにし、ブラウザでしか動かせない処理（グラフ描画、現在地のハイライト表示）だけクライアントコンポーネントにした、と本書2.1節の内容で説明できます。</dd>
+
+<dt>Q. セキュリティ面で工夫した点は？</dt>
+<dd>A. 全テーブルにRow Level Security（RLS）を設定し、「自分のデータしか見えない・操作できない」をアプリのコードではなくデータベース側で強制している点。アプリ側にバグがあっても他人のデータ漏洩を防げる設計にした、と説明できます。</dd>
+
+<dt>Q. 開発で一番苦労した点は？</dt>
+<dd>A. 本書7章のTurbopackのByteStringバグの話がそのまま使えます。「ローカルでは再現しないが本番だけ失敗する」問題を、公式ドキュメントを読む・ローカルで本番相当の環境を再現する・原因を切り分けて自前実装に置き換える、という手順で解決したこと。</dd>
+
+<dt>Q. データベース設計で工夫した点は？</dt>
+<dd>A. 「資格」を全データの起点とする階層構造にしたこと（<a href="資格勉強アプリ_データ設計書_v1.html">データ設計書</a>参照）。単語帳のタグは多対多関係として中間テーブルで表現したこと。復習対象が単語/教材のどちらか一方であることをアプリ側だけでなくDBのCHECK制約でも保証したこと。</dd>
+
+<dt>Q. テストは書きましたか？</dt>
+<dd>A. 正直に「自動テストは未整備」と答えつつ、代わりに機能追加のたびにブラウザで実際に操作して動作確認する運用にしていたこと、今後の改善点として認識していることを伝えるのが誠実です。</dd>
+</dl>
+
+</body>
+</html>
