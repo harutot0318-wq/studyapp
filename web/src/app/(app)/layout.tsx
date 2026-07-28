@@ -46,6 +46,9 @@ export default async function AppLayout({
             <Link href="/word-search" className="hover:underline">
               単語検索
             </Link>
+            <Link href="/review" className="hover:underline">
+              復習管理
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-600">
