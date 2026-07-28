@@ -8,8 +8,19 @@ import {
   toggleResolved,
   deleteWord,
 } from "./actions";
+import { Card } from "@/components/ui/card";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 
 const LEVELS = ["未理解", "うろ覚え", "理解済み"] as const;
+const LEVEL_VARIANT: Record<string, BadgeVariant> = {
+  未理解: "red",
+  うろ覚え: "amber",
+  理解済み: "green",
+};
+
+const inputClass =
+  "rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-400";
+const labelClass = "text-xs font-medium text-gray-500";
 
 export default async function WordsPage({
   searchParams,
@@ -37,27 +48,33 @@ export default async function WordsPage({
   const words = await getWords(showAll ? undefined : { examId: activeExam.id });
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-lg font-bold">わからなかった単語帳</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          わからなかった単語帳
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           新規登録は対象資格「{activeExam.name}」に対して行われます。
         </p>
       </div>
 
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2">
         <Link
           href="/words"
-          className={`px-3 py-2 text-sm ${
-            !showAll ? "border-b-2 border-gray-900 font-semibold" : "text-gray-500"
+          className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+            !showAll
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-white text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50"
           }`}
         >
           対象資格のみ
         </Link>
         <Link
           href="/words?scope=all"
-          className={`px-3 py-2 text-sm ${
-            showAll ? "border-b-2 border-gray-900 font-semibold" : "text-gray-500"
+          className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+            showAll
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-white text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50"
           }`}
         >
           すべての資格
@@ -72,76 +89,70 @@ export default async function WordsPage({
           </Link>
         </p>
       ) : (
-        <form
-          action={createWord}
-          className="flex flex-col gap-3 rounded border border-gray-200 p-4"
-        >
-          <div className="flex gap-3">
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-gray-500">単語</label>
-              <input
-                name="term"
-                required
-                placeholder="例：繰延税金資産"
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              />
+        <Card>
+          <h2 className="mb-3 text-sm font-bold text-gray-800">
+            単語を追加
+          </h2>
+          <form action={createWord} className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <label className={labelClass}>単語</label>
+                <input
+                  name="term"
+                  required
+                  placeholder="例：繰延税金資産"
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-1">
+                <label className={labelClass}>教材</label>
+                <select name="material_id" required className={inputClass}>
+                  {materials.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-gray-500">教材</label>
-              <select
-                name="material_id"
-                required
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              >
-                {materials.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass}>意味・解説・メモ</label>
+              <textarea name="meaning" rows={2} className={inputClass} />
             </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">意味・解説・メモ</label>
-            <textarea
-              name="meaning"
-              rows={2}
-              className="rounded border border-gray-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="flex gap-3">
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-gray-500">
-                タグ（カンマ区切り・任意）
-              </label>
-              <input
-                name="tags"
-                placeholder="例：税効果会計, 仕訳"
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              />
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <label className={labelClass}>
+                  タグ（カンマ区切り・任意）
+                </label>
+                <input
+                  name="tags"
+                  placeholder="例：税効果会計, 仕訳"
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex w-32 flex-col gap-1">
+                <label className={labelClass}>理解度</label>
+                <select
+                  name="understanding_level"
+                  defaultValue="未理解"
+                  className={inputClass}
+                >
+                  {LEVELS.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex w-32 flex-col gap-1">
-              <label className="text-xs text-gray-500">理解度</label>
-              <select
-                name="understanding_level"
-                defaultValue="未理解"
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              >
-                {LEVELS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="self-start rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            ＋ 単語を追加
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="self-start rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+            >
+              ＋ 単語を追加
+            </button>
+          </form>
+        </Card>
       )}
 
       <div className="flex flex-col gap-3">
@@ -149,16 +160,17 @@ export default async function WordsPage({
           <p className="text-sm text-gray-500">まだ単語が登録されていません。</p>
         )}
         {words.map((w) => (
-          <div key={w.id} className="rounded border border-gray-200 p-4">
+          <Card key={w.id}>
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{w.term}</span>
-                  {w.is_resolved && (
-                    <span className="rounded-full border border-gray-300 px-2 py-0.5 text-xs text-gray-500">
-                      解決済み
-                    </span>
-                  )}
+                  <span className="font-bold text-gray-900">{w.term}</span>
+                  <Badge variant={LEVEL_VARIANT[w.understanding_level]}>
+                    {w.understanding_level}
+                  </Badge>
+                  <Badge variant={w.is_resolved ? "green" : "red"}>
+                    {w.is_resolved ? "解決済み" : "未解決"}
+                  </Badge>
                 </div>
                 {w.meaning && (
                   <p className="mt-1 text-sm text-gray-600">{w.meaning}</p>
@@ -172,19 +184,25 @@ export default async function WordsPage({
               </div>
               <form action={deleteWord}>
                 <input type="hidden" name="id" value={w.id} />
-                <button type="submit" className="text-xs text-red-600 underline">
+                <button
+                  type="submit"
+                  className="text-xs text-rose-500 hover:underline"
+                >
                   削除
                 </button>
               </form>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <form action={updateUnderstanding} className="flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+              <form
+                action={updateUnderstanding}
+                className="flex items-center gap-2"
+              >
                 <input type="hidden" name="id" value={w.id} />
                 <select
                   name="understanding_level"
                   defaultValue={w.understanding_level}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  className="rounded-lg border border-gray-200 px-2 py-1 text-xs"
                 >
                   {LEVELS.map((l) => (
                     <option key={l} value={l}>
@@ -194,7 +212,7 @@ export default async function WordsPage({
                 </select>
                 <button
                   type="submit"
-                  className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                  className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   更新
                 </button>
@@ -204,13 +222,13 @@ export default async function WordsPage({
                 <input type="hidden" name="id" value={w.id} />
                 <button
                   type="submit"
-                  className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                  className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   {w.is_resolved ? "未解決に戻す" : "解決済みにする"}
                 </button>
               </form>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

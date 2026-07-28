@@ -8,6 +8,7 @@ import {
 } from "@/lib/analytics/queries";
 import { SimpleBarChart } from "@/components/charts/bar-chart";
 import { SimpleLineChart } from "@/components/charts/line-chart";
+import { Card } from "@/components/ui/card";
 
 export default async function AnalysisPage() {
   const activeExam = await getActiveExam();
@@ -32,50 +33,50 @@ export default async function AnalysisPage() {
   ]);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div>
-        <h1 className="text-lg font-bold">学習分析</h1>
+        <h1 className="text-2xl font-bold text-gray-900">学習分析</h1>
         <p className="mt-1 text-sm text-gray-500">
           対象資格：{activeExam.name}
         </p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="rounded border border-gray-200 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">
+        <Card>
+          <h2 className="mb-2 text-sm font-bold text-gray-800">
             科目別 学習時間
           </h2>
           {subjectTotals.length === 0 ? (
-            <p className="text-sm text-gray-500">データがありません</p>
+            <p className="text-sm text-gray-400">データがありません</p>
           ) : (
-            <SimpleBarChart data={subjectTotals} unit="h" />
+            <SimpleBarChart data={subjectTotals} unit="h" color="#4f46e5" />
           )}
-        </div>
-        <div className="rounded border border-gray-200 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">
+        </Card>
+        <Card>
+          <h2 className="mb-2 text-sm font-bold text-gray-800">
             教材別 学習時間
           </h2>
           {materialTotals.length === 0 ? (
-            <p className="text-sm text-gray-500">データがありません</p>
+            <p className="text-sm text-gray-400">データがありません</p>
           ) : (
-            <SimpleBarChart data={materialTotals} unit="h" />
+            <SimpleBarChart data={materialTotals} unit="h" color="#f59e0b" />
           )}
-        </div>
+        </Card>
       </div>
 
-      <div className="rounded border border-gray-200 p-4">
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">
+      <Card>
+        <h2 className="mb-2 text-sm font-bold text-gray-800">
           学習時間の推移（直近14日・分）
         </h2>
-        <SimpleLineChart data={dailyTrend} dataKey="minutes" />
-      </div>
+        <SimpleLineChart data={dailyTrend} dataKey="minutes" color="#4f46e5" />
+      </Card>
 
-      <div className="rounded border border-gray-200 p-4">
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">
+      <Card>
+        <h2 className="mb-2 text-sm font-bold text-gray-800">
           継続学習日数の推移（直近30日）
         </h2>
-        <SimpleLineChart data={streakTrend} dataKey="streak" />
-      </div>
+        <SimpleLineChart data={streakTrend} dataKey="streak" color="#f59e0b" />
+      </Card>
     </div>
   );
 }

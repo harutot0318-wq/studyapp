@@ -21,6 +21,7 @@ web/build
 # misc
 .DS_Store
 *.pem
+design_reference.html
 
 # debug
 npm-debug.log*

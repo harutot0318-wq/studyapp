@@ -10,8 +10,14 @@ import {
   completeReview,
   deleteReview,
 } from "./actions";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const LEVELS = ["未理解", "うろ覚え", "理解済み"] as const;
+
+const inputClass =
+  "rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-400";
+const labelClass = "text-xs font-medium text-gray-500";
 
 export default async function ReviewPage({
   searchParams,
@@ -47,27 +53,31 @@ export default async function ReviewPage({
   const today = toDateStr(new Date());
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-lg font-bold">復習管理</h1>
+        <h1 className="text-2xl font-bold text-gray-900">復習管理</h1>
         <p className="mt-1 text-sm text-gray-500">
           対象資格：{activeExam.name}
         </p>
       </div>
 
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2">
         <Link
           href={{ pathname: "/review", query: {} }}
-          className={`px-3 py-2 text-sm ${
-            !showDone ? "border-b-2 border-gray-900 font-semibold" : "text-gray-500"
+          className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+            !showDone
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-white text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50"
           }`}
         >
           未実施
         </Link>
         <Link
           href={{ pathname: "/review", query: { tab: "done" } }}
-          className={`px-3 py-2 text-sm ${
-            showDone ? "border-b-2 border-gray-900 font-semibold" : "text-gray-500"
+          className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+            showDone
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-white text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50"
           }`}
         >
           実施済み
@@ -76,11 +86,8 @@ export default async function ReviewPage({
 
       {!showDone && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <form
-            action={createWordReview}
-            className="flex flex-col gap-2 rounded border border-gray-200 p-4"
-          >
-            <h2 className="text-sm font-semibold text-gray-700">
+          <Card>
+            <h2 className="mb-2 text-sm font-bold text-gray-800">
               単語の復習を予定
             </h2>
             {words.length === 0 ? (
@@ -88,12 +95,8 @@ export default async function ReviewPage({
                 対象になる単語がありません。
               </p>
             ) : (
-              <>
-                <select
-                  name="word_id"
-                  required
-                  className="rounded border border-gray-300 px-3 py-2 text-sm"
-                >
+              <form action={createWordReview} className="flex flex-col gap-2">
+                <select name="word_id" required className={inputClass}>
                   {words.map((w) => (
                     <option key={w.id} value={w.id}>
                       {w.term}
@@ -105,23 +108,20 @@ export default async function ReviewPage({
                   name="scheduled_date"
                   required
                   defaultValue={today}
-                  className="rounded border border-gray-300 px-3 py-2 text-sm"
+                  className={inputClass}
                 />
                 <button
                   type="submit"
-                  className="self-start rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
+                  className="self-start rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   ＋ 追加
                 </button>
-              </>
+              </form>
             )}
-          </form>
+          </Card>
 
-          <form
-            action={createMaterialReview}
-            className="flex flex-col gap-2 rounded border border-gray-200 p-4"
-          >
-            <h2 className="text-sm font-semibold text-gray-700">
+          <Card>
+            <h2 className="mb-2 text-sm font-bold text-gray-800">
               教材の復習を予定
             </h2>
             {materials.length === 0 ? (
@@ -129,12 +129,11 @@ export default async function ReviewPage({
                 対象になる教材がありません。
               </p>
             ) : (
-              <>
-                <select
-                  name="material_id"
-                  required
-                  className="rounded border border-gray-300 px-3 py-2 text-sm"
-                >
+              <form
+                action={createMaterialReview}
+                className="flex flex-col gap-2"
+              >
+                <select name="material_id" required className={inputClass}>
                   {materials.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name}
@@ -146,41 +145,48 @@ export default async function ReviewPage({
                   name="scheduled_date"
                   required
                   defaultValue={today}
-                  className="rounded border border-gray-300 px-3 py-2 text-sm"
+                  className={inputClass}
                 />
                 <button
                   type="submit"
-                  className="self-start rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
+                  className="self-start rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   ＋ 追加
                 </button>
-              </>
+              </form>
             )}
-          </form>
+          </Card>
         </div>
       )}
 
       <div className="flex flex-col gap-3">
         {filtered.length === 0 && (
           <p className="text-sm text-gray-500">
-            {showDone ? "実施済みの復習はありません。" : "予定されている復習はありません。"}
+            {showDone
+              ? "実施済みの復習はありません。"
+              : "予定されている復習はありません。"}
           </p>
         )}
         {filtered.map((r) => (
-          <div key={r.id} className="rounded border border-gray-200 p-4">
+          <Card key={r.id}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="rounded-full border border-gray-300 px-2 py-0.5 text-xs text-gray-500">
+                <Badge variant={r.targetType === "word" ? "indigo" : "blue"}>
                   {r.targetType === "word" ? "単語帳" : "教材"}
+                </Badge>
+                <span className="font-bold text-gray-900">
+                  {r.targetLabel}
                 </span>
-                <span className="font-medium">{r.targetLabel}</span>
                 <span className="text-xs text-gray-500">
                   予定日：{r.scheduled_date}
                 </span>
               </div>
               <form action={deleteReview}>
                 <input type="hidden" name="id" value={r.id} />
-                <button type="submit" className="text-xs text-red-600 underline">
+                <button
+                  type="submit"
+                  className="text-xs text-rose-500 hover:underline"
+                >
                   削除
                 </button>
               </form>
@@ -189,7 +195,7 @@ export default async function ReviewPage({
             {!showDone && (
               <form
                 action={completeReview}
-                className="mt-3 flex flex-wrap items-end gap-2"
+                className="mt-3 flex flex-wrap items-end gap-2 border-t border-gray-100 pt-3"
               >
                 <input type="hidden" name="id" value={r.id} />
                 <input type="hidden" name="target_type" value={r.targetType} />
@@ -202,11 +208,11 @@ export default async function ReviewPage({
 
                 {r.targetType === "word" && (
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-500">理解度を更新</label>
+                    <label className={labelClass}>理解度を更新</label>
                     <select
                       name="next_understanding_level"
                       defaultValue={r.currentUnderstanding ?? "未理解"}
-                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                      className="rounded-lg border border-gray-200 px-2 py-1 text-xs"
                     >
                       {LEVELS.map((l) => (
                         <option key={l} value={l}>
@@ -218,25 +224,23 @@ export default async function ReviewPage({
                 )}
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-gray-500">
-                    次回復習予定日（任意）
-                  </label>
+                  <label className={labelClass}>次回復習予定日（任意）</label>
                   <input
                     type="date"
                     name="next_scheduled_date"
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
+                    className="rounded-lg border border-gray-200 px-2 py-1 text-xs"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700"
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
                 >
                   実施済みにする
                 </button>
               </form>
             )}
-          </div>
+          </Card>
         ))}
       </div>
     </div>

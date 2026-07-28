@@ -5,6 +5,11 @@ import { getMaterials } from "@/lib/materials/queries";
 import { getRecentStudyLogs } from "@/lib/study-logs/queries";
 import { toDateStr } from "@/lib/dates";
 import { createSubject, createStudyLog } from "./actions";
+import { Card } from "@/components/ui/card";
+
+const inputClass =
+  "rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-400";
+const labelClass = "text-xs font-medium text-gray-500";
 
 export default async function StudyLogPage() {
   const activeExam = await getActiveExam();
@@ -29,23 +34,22 @@ export default async function StudyLogPage() {
   ]);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-lg font-bold">学習記録</h1>
+        <h1 className="text-2xl font-bold text-gray-900">学習記録</h1>
         <p className="mt-1 text-sm text-gray-500">
           対象資格：{activeExam.name}
         </p>
       </div>
 
-      {/* 科目のクイック登録 */}
-      <div className="rounded border border-gray-200 p-4">
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">科目</h2>
+      <Card>
+        <h2 className="mb-3 text-sm font-bold text-gray-800">科目</h2>
         {subjects.length > 0 && (
           <ul className="mb-3 flex flex-wrap gap-2">
             {subjects.map((s) => (
               <li
                 key={s.id}
-                className="rounded-full border border-gray-300 px-3 py-1 text-xs"
+                className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700"
               >
                 {s.name}
               </li>
@@ -58,124 +62,135 @@ export default async function StudyLogPage() {
             name="name"
             required
             placeholder="例：簿記論"
-            className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+            className={`flex-1 ${inputClass}`}
           />
           <button
             type="submit"
-            className="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
             ＋ 科目を追加
           </button>
         </form>
-      </div>
+      </Card>
 
-      {/* 学習記録フォーム */}
       {subjects.length === 0 ? (
         <p className="text-sm text-gray-500">
           学習記録をつけるには、先に科目を1つ追加してください。
         </p>
       ) : (
-        <form
-          action={createStudyLog}
-          className="flex flex-col gap-3 rounded border border-gray-200 p-4"
-        >
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">科目</label>
-            <select
-              name="subject_id"
-              required
-              className="rounded border border-gray-300 px-3 py-2 text-sm"
-            >
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {materials.length > 0 && (
+        <Card>
+          <h2 className="mb-3 text-sm font-bold text-gray-800">新規記録</h2>
+          <form action={createStudyLog} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-500">教材（任意）</label>
-              <select
-                name="material_id"
-                defaultValue=""
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              >
-                <option value="">選択しない</option>
-                {materials.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
+              <label className={labelClass}>科目</label>
+              <select name="subject_id" required className={inputClass}>
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
                   </option>
                 ))}
               </select>
             </div>
-          )}
-          <div className="flex gap-3">
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-gray-500">学習日</label>
-              <input
-                type="date"
-                name="study_date"
-                required
-                defaultValue={toDateStr(new Date())}
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              />
+            {materials.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>教材（任意）</label>
+                <select
+                  name="material_id"
+                  defaultValue=""
+                  className={inputClass}
+                >
+                  <option value="">選択しない</option>
+                  {materials.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <label className={labelClass}>学習日</label>
+                <input
+                  type="date"
+                  name="study_date"
+                  required
+                  defaultValue={toDateStr(new Date())}
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-1">
+                <label className={labelClass}>学習時間（分）</label>
+                <input
+                  type="number"
+                  name="duration_minutes"
+                  required
+                  min={1}
+                  placeholder="例：60"
+                  className={inputClass}
+                />
+              </div>
             </div>
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-gray-500">学習時間（分）</label>
-              <input
-                type="number"
-                name="duration_minutes"
-                required
-                min={1}
-                placeholder="例：60"
-                className="rounded border border-gray-300 px-3 py-2 text-sm"
-              />
+            <div className="flex flex-col gap-1">
+              <label className={labelClass}>メモ（任意）</label>
+              <textarea name="memo" rows={2} className={inputClass} />
             </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">メモ（任意）</label>
-            <textarea
-              name="memo"
-              rows={2}
-              className="rounded border border-gray-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="self-start rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            記録する
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="self-start rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+            >
+              記録する
+            </button>
+          </form>
+        </Card>
       )}
 
-      {/* 最近の学習記録 */}
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-gray-700">
+      <Card className="p-0">
+        <div className="px-5 pt-5 text-sm font-bold text-gray-800">
           最近の学習記録
-        </h2>
-        {studyLogs.length === 0 && (
-          <p className="text-sm text-gray-500">まだ記録がありません。</p>
+        </div>
+        {studyLogs.length === 0 ? (
+          <p className="px-5 py-6 text-sm text-gray-400">
+            まだ記録がありません。
+          </p>
+        ) : (
+          <table className="mt-3 w-full text-sm">
+            <thead>
+              <tr className="border-t border-gray-100 text-left text-xs font-semibold text-gray-500">
+                <th className="px-5 py-2">日付</th>
+                <th className="px-5 py-2">科目</th>
+                <th className="px-5 py-2">教材</th>
+                <th className="px-5 py-2">時間</th>
+                <th className="px-5 py-2">メモ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {studyLogs.map((log) => (
+                <tr key={log.id} className="border-t border-gray-100">
+                  <td className="px-5 py-3 text-gray-600">
+                    {log.study_date}
+                  </td>
+                  <td className="px-5 py-3 font-semibold text-gray-900">
+                    {log.subject?.name}
+                  </td>
+                  <td className="px-5 py-3 text-gray-600">
+                    {log.material?.name ?? "―"}
+                  </td>
+                  <td className="px-5 py-3 font-semibold text-gray-900">
+                    {log.duration_minutes / 60 >= 1
+                      ? `${(log.duration_minutes / 60).toFixed(1)}h`
+                      : `${log.duration_minutes}分`}
+                  </td>
+                  <td className="max-w-[220px] truncate px-5 py-3 text-gray-500">
+                    {log.memo}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-        {studyLogs.map((log) => (
-          <div
-            key={log.id}
-            className="rounded border border-gray-200 p-3 text-sm"
-          >
-            <div className="flex justify-between">
-              <span>
-                {log.study_date}　{log.subject?.name}
-                {log.material?.name && `（${log.material.name}）`}
-              </span>
-              <span>{log.duration_minutes}分</span>
-            </div>
-            {log.memo && (
-              <p className="mt-1 text-xs text-gray-500">{log.memo}</p>
-            )}
-          </div>
-        ))}
-      </div>
+        <div className="h-2" />
+      </Card>
     </div>
   );
 }

@@ -13,18 +13,20 @@ import {
 export function SimpleBarChart({
   data,
   unit,
+  color = "#4f46e5",
 }: {
   data: { name: string; hours: number }[];
   unit?: string;
+  color?: string;
 }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#6b7280" }} />
+        <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} />
         <Tooltip formatter={(value) => [`${value}${unit ?? ""}`, "学習時間"]} />
-        <Bar dataKey="hours" fill="#111827" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="hours" fill={color} radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
