@@ -40,6 +40,9 @@ export default async function AppLayout({
             <Link href="/materials" className="hover:underline">
               教材管理
             </Link>
+            <Link href="/words" className="hover:underline">
+              単語帳
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-600">
