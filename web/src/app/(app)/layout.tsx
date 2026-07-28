@@ -49,6 +49,9 @@ export default async function AppLayout({
             <Link href="/review" className="hover:underline">
               復習管理
             </Link>
+            <Link href="/goals" className="hover:underline">
+              目標管理
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-600">

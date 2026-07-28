@@ -3,6 +3,7 @@ import { getActiveExam } from "@/lib/exams/active";
 import { getDashboardStats } from "@/lib/dashboard/queries";
 import { getTasks } from "@/lib/tasks/queries";
 import { getRecentStudyLogs } from "@/lib/study-logs/queries";
+import { getGoals } from "@/lib/goals/queries";
 import { daysUntil } from "@/lib/dates";
 
 function formatHours(minutes: number): string {
@@ -44,13 +45,15 @@ export default async function DashboardPage() {
     );
   }
 
-  const [stats, tasks, logs] = await Promise.all([
+  const [stats, tasks, logs, goals] = await Promise.all([
     getDashboardStats(activeExam.id),
     getTasks(activeExam.id),
     getRecentStudyLogs(activeExam.id, 5),
+    getGoals(activeExam.id),
   ]);
 
   const incompleteTasks = tasks.filter((t) => !t.is_done).slice(0, 5);
+  const dailyGoal = goals.find((g) => g.period === "日");
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
@@ -65,7 +68,20 @@ export default async function DashboardPage() {
         <StatCard label="今日の学習時間" value={formatHours(stats.todayMinutes)} />
         <StatCard label="今週の学習時間" value={formatHours(stats.weekMinutes)} />
         <StatCard label="連続学習日数" value={`${stats.streakDays}日`} />
-        <StatCard label="今日の目標達成率" value="未設定" muted />
+        {dailyGoal ? (
+          <StatCard
+            label="今日の目標達成率"
+            value={`${dailyGoal.achievementRate}%`}
+          />
+        ) : (
+          <div className="rounded border border-dashed border-gray-300 p-3 text-center">
+            <div className="text-xs text-gray-500">今日の目標達成率</div>
+            <div className="mt-2 text-xs text-gray-400">未設定</div>
+            <Link href="/goals" className="text-xs text-gray-500 underline">
+              → 目標を設定
+            </Link>
+          </div>
+        )}
         <StatCard
           label="試験までの残り日数"
           value={daysUntil(activeExam.exam_date)}
