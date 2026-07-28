@@ -23,7 +23,7 @@ export function SimpleBarChart({
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
         <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip formatter={(value: number) => [`${value}${unit ?? ""}`, "学習時間"]} />
+        <Tooltip formatter={(value) => [`${value}${unit ?? ""}`, "学習時間"]} />
         <Bar dataKey="hours" fill="#111827" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
