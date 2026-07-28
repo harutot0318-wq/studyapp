@@ -30,6 +30,7 @@ export async function createStudyLog(formData: FormData) {
   if (!user) return;
 
   const subjectId = formData.get("subject_id") as string;
+  const materialId = (formData.get("material_id") as string) || null;
   const studyDate = formData.get("study_date") as string;
   const durationMinutes = Number(formData.get("duration_minutes"));
   const memo = (formData.get("memo") as string)?.trim() || null;
@@ -39,6 +40,7 @@ export async function createStudyLog(formData: FormData) {
   const { error } = await supabase.from("study_logs").insert({
     user_id: user.id,
     subject_id: subjectId,
+    material_id: materialId,
     study_date: studyDate,
     duration_minutes: durationMinutes,
     memo,

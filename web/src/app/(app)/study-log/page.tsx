@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getActiveExam } from "@/lib/exams/active";
 import { getSubjects } from "@/lib/subjects/queries";
+import { getMaterials } from "@/lib/materials/queries";
 import { getRecentStudyLogs } from "@/lib/study-logs/queries";
+import { toDateStr } from "@/lib/dates";
 import { createSubject, createStudyLog } from "./actions";
 
 export default async function StudyLogPage() {
@@ -20,8 +22,9 @@ export default async function StudyLogPage() {
     );
   }
 
-  const [subjects, studyLogs] = await Promise.all([
+  const [subjects, materials, studyLogs] = await Promise.all([
     getSubjects(activeExam.id),
+    getMaterials(activeExam.id),
     getRecentStudyLogs(activeExam.id),
   ]);
 
@@ -90,6 +93,23 @@ export default async function StudyLogPage() {
               ))}
             </select>
           </div>
+          {materials.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">教材（任意）</label>
+              <select
+                name="material_id"
+                defaultValue=""
+                className="rounded border border-gray-300 px-3 py-2 text-sm"
+              >
+                <option value="">選択しない</option>
+                {materials.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
               <label className="text-xs text-gray-500">学習日</label>
@@ -97,7 +117,7 @@ export default async function StudyLogPage() {
                 type="date"
                 name="study_date"
                 required
-                defaultValue={new Date().toISOString().slice(0, 10)}
+                defaultValue={toDateStr(new Date())}
                 className="rounded border border-gray-300 px-3 py-2 text-sm"
               />
             </div>
@@ -146,6 +166,7 @@ export default async function StudyLogPage() {
             <div className="flex justify-between">
               <span>
                 {log.study_date}　{log.subject?.name}
+                {log.material?.name && `（${log.material.name}）`}
               </span>
               <span>{log.duration_minutes}分</span>
             </div>

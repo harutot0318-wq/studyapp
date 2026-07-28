@@ -6,6 +6,7 @@ export type StudyLog = {
   duration_minutes: number;
   memo: string | null;
   subject: { name: string } | null;
+  material: { name: string } | null;
 };
 
 export async function getRecentStudyLogs(
@@ -15,7 +16,9 @@ export async function getRecentStudyLogs(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("study_logs")
-    .select("id, study_date, duration_minutes, memo, subject:subjects!inner(name, exam_id)")
+    .select(
+      "id, study_date, duration_minutes, memo, subject:subjects!inner(name, exam_id), material:materials(name)",
+    )
     .eq("subjects.exam_id", examId)
     .order("study_date", { ascending: false })
     .limit(limit);
