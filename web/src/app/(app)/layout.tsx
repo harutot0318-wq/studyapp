@@ -43,6 +43,9 @@ export default async function AppLayout({
             <Link href="/words" className="hover:underline">
               単語帳
             </Link>
+            <Link href="/word-search" className="hover:underline">
+              単語検索
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-600">
