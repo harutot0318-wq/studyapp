@@ -21,7 +21,18 @@ export async function GET(request: Request) {
       if (!error) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      console.error("exchangeCodeForSession failed:", error.message, error.status);
+      console.error(
+        "exchangeCodeForSession failed (full):",
+        JSON.stringify(error, Object.getOwnPropertyNames(error)),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const cause = (error as any).cause;
+      if (cause) {
+        console.error(
+          "cause:",
+          JSON.stringify(cause, Object.getOwnPropertyNames(cause)),
+        );
+      }
       return NextResponse.redirect(
         `${origin}/auth/error?reason=${encodeURIComponent(error.message)}`,
       );
